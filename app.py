@@ -5,14 +5,13 @@ import time
 import qrcode
 from io import BytesIO
 
-# --- CONFIGURATION ---
-st.set_page_config(page_title="IA vs MÉDECIN - Dr. Méga Senku", page_icon="🧪", layout="wide")
+# --- CONFIGURATION DE LA PAGE ---
+st.set_page_config(page_title="Dr. Méga Senku - IA Médicale v8.0", page_icon="🧪", layout="wide")
 
-# Fonction de lecture vocale (gTTS)
+# --- FONCTION AUDIO (Sécurisée pour le web) ---
 def parler(texte):
     try:
         tts = gTTS(text=texte, lang='fr')
-        # On utilise BytesIO pour ne pas créer de fichier sur le serveur
         mp3_fp = BytesIO()
         tts.write_to_fp(mp3_fp)
         mp3_fp.seek(0)
@@ -20,166 +19,159 @@ def parler(texte):
         md = f'<audio autoplay="true"><source src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>'
         st.markdown(md, unsafe_allow_html=True)
     except:
-        pass
+        st.warning("⚠️ Audio indisponible (Vérifiez votre connexion)")
 
-# Initialisation des états
+# --- INITIALISATION DES VARIABLES ---
 if 'etape' not in st.session_state:
     st.session_state.etape = "OFF"
     st.session_state.reponses = {}
     st.session_state.index_q = 0
     st.session_state.phrase_senku = ""
 
-st.markdown("# 👨‍🔬 Dr. Méga Senku - Intelligence Médicale Avancée")
-st.markdown("### 🔍 Problématique : L'IA peut-elle surpasser le diagnostic humain ?")
-st.divider()
+# --- BASE DE DONNÉES DES SYMPTÔMES (30 POINTS) ---
+QUESTIONS = [
+    ("fievre", "Fièvre élevée (>38.5°C) ?"), ("fatigue", "Fatigue extrême / Épuisement ?"), 
+    ("frissons", "Frissons ou sueurs nocturnes ?"), ("tete", "Maux de tête violents ?"), 
+    ("gorge", "Mal de gorge intense ?"), ("nuque", "Raideur de la nuque (douleur en baissant la tête) ?"),
+    ("vertiges", "Vertiges ou pertes d'équilibre ?"), ("ganglions", "Ganglions gonflés (cou/aisselles) ?"),
+    ("toux_seche", "Toux sèche et irritante ?"), ("toux_grasse", "Toux avec sécrétions (glaires) ?"), 
+    ("souffle", "Difficulté à respirer / Essoufflement ?"), ("sifflement", "Sifflement lors de la respiration ?"), 
+    ("nez_coule", "Écoulement nasal ou nez bouché ?"), ("nausees", "Nausées ou envie de vomir ?"), 
+    ("vomis", "Vomissements effectifs ?"), ("douleur_ventre", "Douleurs abdominales générales ?"),
+    ("diarrhee", "Diarrhée ou troubles intestinaux ?"), ("appetit", "Perte totale d'appétit ?"),
+    ("courbatures", "Douleurs musculaires / Courbatures ?"), ("dos", "Douleur vive dans le bas du dos ?"), 
+    ("articulations", "Douleurs aux articulations ?"), ("boutons", "Apparition de boutons ou vésicules ?"), 
+    ("plaques", "Plaques rouges ou démangeaisons ?"), ("teint", "Teint pâle ou yeux jaunes ?"),
+    ("perte_gout", "Perte du goût ou de l'odorat ?"), ("taches_bouche", "Taches blanches anormales dans la bouche ?"),
+    ("douleur_droite", "Douleur précise en bas à droite du ventre ?"), ("photophobie", "La lumière fait-elle mal aux yeux ?"),
+    ("soif", "Soif permanente et besoin d'uriner fréquent ?"), ("oppression", "Sensation d'oppression dans la poitrine ?")
+]
 
-col_visuel, col_info = st.columns([1, 2])
+# --- BASE DE DONNÉES DES PATHOLOGIES (Logique : Communs | Signatures | Traitement) ---
+DB = {
+    "Grippe Infectieuse": (["fievre", "fatigue", "frissons", "toux_seche"], ["courbatures", "tete"], "Repos, Paracétamol, Hydratation."),
+    "Méningite": (["fievre", "tete", "nausees", "vomis"], ["nuque", "photophobie"], "URGENCE VITALE : Appelez le 15 immédiatement."),
+    "Appendicite Aiguë": (["fievre", "nausees", "vomis", "appetit"], ["douleur_ventre", "douleur_droite"], "URGENCE : Chirurgie nécessaire."),
+    "COVID-19": (["fievre", "toux_seche", "fatigue", "nez_coule"], ["perte_gout", "souffle"], "Isolement, Test PCR, Surveillance."),
+    "Gastro-entérite": (["fatigue", "appetit", "douleur_ventre", "frissons"], ["vomis", "diarrhee"], "Réhydratation, Régime riz/carottes."),
+    "Asthme Sévère": (["toux_seche", "oppression", "fatigue"], ["souffle", "sifflement"], "Ventoline, Corticoïdes."),
+    "Pneumonie": (["fievre", "frissons", "fatigue", "souffle"], ["toux_grasse", "oppression"], "Antibiotiques, Radio pulmonaire."),
+    "Angine Bactérienne": (["fievre", "tete", "fatigue"], ["gorge", "ganglions"], "Antibiotiques, Repos."),
+    "Anémie Profonde": (["fatigue", "vertiges"], ["teint", "ongles_cassants"], "Supplémentation en fer, Bilan sanguin."),
+    "Rougeole": (["fievre", "nez_coule", "toux_seche"], ["boutons", "taches_bouche"], "Surveillance fièvre, Repos."),
+    "Insolation": (["fievre", "tete"], ["plaques", "nausees"], "Mise au frais, Réhydratation."),
+    "Diabète (Détection)": (["fatigue", "appetit"], ["soif", "perte_poids"], "Consultation pour test glycémique.")
+}
 
-# --- VISUEL ---
-with col_visuel:
-    robot_place = st.empty()
-    try:
-        if st.session_state.etape == "QUESTIONS":
-            robot_place.image("repos.jpg", width=400)
-        else:
-            robot_place.image("tenor.gif", width=400)
-    except:
-        pass
+st.title("👨‍🔬 Système Expert : Dr. Méga Senku")
+st.write("---")
 
-# --- LOGIQUE ET TEXTE ---
-with col_info:
-    # --- LISTE DES 30 SYMPTÔMES (Base V7) ---
-    QUESTIONS = [
-        ("fievre", "Fièvre (>38.5°C) ?"), ("fatigue", "Fatigue intense / Épuisement ?"), ("frissons", "Frissons ou sueurs nocturnes ?"),
-        ("tete", "Maux de tête violents ?"), ("gorge", "Mal de gorge intense ?"), ("nuque", "Raideur de la nuque ?"),
-        ("vertiges", "Vertiges ou pertes d'équilibre ?"), ("ganglions", "Ganglions gonflés ?"),
-        ("toux_seche", "Toux sèche irritante ?"), ("toux_grasse", "Toux avec sécrétions ?"), ("souffle", "Difficulté à respirer ?"),
-        ("sifflement", "Sifflement respiratoire ?"), ("nez_coule", "Écoulement nasal ?"),
-        ("nausees", "Nausées ?"), ("vomis", "Vomissements ?"), ("douleur_ventre", "Douleurs abdominales ?"),
-        ("diarrhee", "Diarrhée ?"), ("appetit", "Perte d'appétit ?"),
-        ("courbatures", "Douleurs musculaires ?"), ("dos", "Douleur vive dans le dos ?"), ("articulations", "Douleurs aux articulations ?"),
-        ("boutons", "Apparition de boutons ?"), ("plaques", "Plaques rouges ?"), ("teint", "Teint pâle ou yeux jaunes ?"),
-        ("perte_gout", "Perte du goût ou de l'odorat ?"), ("taches_bouche", "Taches blanches dans la bouche ?"),
-        ("douleur_droite", "Douleur précise en bas à droite du ventre ?"), ("photophobie", "La lumière fait-elle mal ?"),
-        ("soif", "Soif permanente ?"), ("oppression", "Oppression thoracique ?")
-    ]
-
-    # --- BASE DE DONNÉES (Base V7) ---
-    DB = {
-        "Grippe Infectieuse": (["fievre", "fatigue", "frissons", "toux_seche"], ["courbatures", "tete"], "Repos, Paracétamol, Hydratation."),
-        "Méningite": (["fievre", "tete", "nausees", "vomis"], ["nuque", "photophobie"], "URGENCE VITALE : Appelez le 15."),
-        "Appendicite Aiguë": (["fievre", "nausees", "vomis", "appetit"], ["douleur_ventre", "douleur_droite"], "URGENCE : Chirurgie."),
-        "COVID-19": (["fievre", "toux_seche", "fatigue", "nez_coule"], ["perte_gout", "souffle"], "Isolement, Test PCR."),
-        "Gastro-entérite": (["fatigue", "appetit", "douleur_ventre", "frissons"], ["vomis", "diarrhee"], "Solution réhydratation, Régime."),
-        "Asthme Sévère": (["toux_seche", "oppression", "fatigue", "frissons"], ["souffle", "sifflement"], "Ventoline, Corticoïdes."),
-        "Pneumonie": (["fievre", "frissons", "fatigue", "souffle"], ["toux_grasse", "oppression"], "Antibiotiques, Radio pulmonaire.")
-    }
-
-    # --- AFFICHAGE ---
-    if st.session_state.etape == "OFF":
-        st.session_state.phrase_senku = "Le diagnostic humain est lent. Ma logique binaire est instantanée. Scannons 30 points de données à 10 milliards de pourcent !"
-        st.write(f"💬 **Senku :** {st.session_state.phrase_senku}")
-        parler(st.session_state.phrase_senku)
-
-        # GÉNÉRATION DU CODE QR
-        url = "https://drmega-senkuai-27cruqmreat3uqpqgyt4ez.streamlit.app/" # Ton URL
-        qr = qrcode.QRCode(version=1, box_size=10, border=5)
-        qr.add_data(url)
-        qr.make(fit=True)
-        img_qr = qr.make_image(fill_color="black", back_color="white")
+# --- ÉCRAN D'ACCUEIL ---
+if st.session_state.etape == "OFF":
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        try: st.image("tenor.gif", width=400)
+        except: st.info("🧪 [Image Senku active]")
         
-        # Affichage du code QR
-        buf = BytesIO()
-        img_qr.save(buf, format="PNG")
-        st.image(buf.getvalue(), caption="Flashez pour tester sur mobile", width=200)
-
-        if st.button("🚀 ACTIVER LE SCANNER (30 POINTS)"):
+        st.session_state.phrase_senku = "Le diagnostic humain est lent et biaisé. Ma logique binaire est prête à 10 milliards de pourcent !"
+        st.subheader(st.session_state.phrase_senku)
+        parler(st.session_state.phrase_senku)
+        
+        if st.button("🚀 LANCER LE SCAN MÉDICAL (30 POINTS)"):
             st.session_state.etape = "QUESTIONS"
             st.rerun()
 
-    elif st.session_state.etape == "QUESTIONS":
-        idx = st.session_state.index_q
-        if idx < len(QUESTIONS):
-            id_s, txt = QUESTIONS[idx]
-            st.write(f"📊 **Examen n°{idx+1} / 30**")
-            st.progress((idx + 1) / len(QUESTIONS))
-            st.info(txt)
-            
-            # Phrase de Senku selon la réponse (Optionnel, peut ralentir)
-            if idx > 0:
-                if st.session_state.reponses.get(QUESTIONS[idx-1][0]):
-                    st.caption("🔬 *Intéressant... Donnée enregistrée.*")
-                else:
-                    st.caption("🔬 *Négatif. Poursuite du scan.*")
+    with col2:
+        st.write("### 📱 Version Mobile")
+        url = "https://drmega-senkuai-27cruqmreat3uqpqgyt4ez.streamlit.app/"
+        qr_gen = qrcode.QRCode(box_size=5, border=2)
+        qr_gen.add_data(url)
+        qr_gen.make(fit=True)
+        img_qr = qr_gen.make_image(fill_color="black", back_color="white")
+        buf = BytesIO()
+        img_qr.save(buf, format="PNG")
+        st.image(buf.getvalue(), caption="Flashez pour tester sur téléphone")
 
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button("✅ OUI"):
-                    st.session_state.reponses[id_s] = True
-                    st.session_state.index_q += 1
-                    st.rerun()
-            with c2:
-                if st.button("❌ NON"):
-                    st.session_state.reponses[id_s] = False
-                    st.session_state.index_q += 1
-                    st.rerun()
-        else:
-            st.session_state.etape = "AI_THINKING"
-            st.rerun()
-
-    elif st.session_state.etape == "AI_THINKING":
-        st.session_state.phrase_senku = "Analyse différentielle des 30 points de contrôle. Comparaison avec la matrice de 50 pathologies. Connexion neuronale établie."
-        st.write(f"🔬 **Senku :** {st.session_state.phrase_senku}")
-        parler(st.session_state.phrase_senku)
+# --- PHASE DE QUESTIONS ---
+elif st.session_state.etape == "QUESTIONS":
+    idx = st.session_state.index_q
+    if idx < len(QUESTIONS):
+        id_s, txt = QUESTIONS[idx]
         
-        bar = st.progress(0)
-        for i in range(100):
-            time.sleep(0.04)
-            bar.progress(i + 1)
-        st.session_state.etape = "RESULTAT"
+        st.write(f"📊 **Analyse systémique n°{idx+1} / 30**")
+        st.progress((idx + 1) / len(QUESTIONS))
+        
+        # Affichage de Senku en petit pendant les questions
+        c_img, c_txt = st.columns([1, 4])
+        with c_img:
+            try: st.image("repos.jpg", width=150)
+            except: pass
+        with c_txt:
+            st.info(f"QUESTION : {txt}")
+
+        col_oui, col_non = st.columns(2)
+        with col_oui:
+            if st.button("✅ OUI", use_container_width=True):
+                st.session_state.reponses[id_s] = True
+                st.session_state.index_q += 1
+                st.rerun()
+        with col_non:
+            if st.button("❌ NON", use_container_width=True):
+                st.session_state.reponses[id_s] = False
+                st.session_state.index_q += 1
+                st.rerun()
+    else:
+        st.session_state.etape = "AI_THINKING"
         st.rerun()
 
-    elif st.session_state.etape == "RESULTAT":
-        mes_s = [k for k, v in st.session_state.reponses.items() if v]
+# --- SIMULATION DE RÉFLEXION ---
+elif st.session_state.etape == "AI_THINKING":
+    st.write("🔬 **Senku :** Analyse différentielle des 30 points de données en cours...")
+    parler("Analyse des données. Je compare vos symptômes à ma matrice de pathologies.")
+    bar = st.progress(0)
+    for i in range(100):
+        time.sleep(0.03)
+        bar.progress(i + 1)
+    st.session_state.etape = "RESULTAT"
+    st.rerun()
+
+# --- RÉSULTAT FINAL ---
+elif st.session_state.etape == "RESULTAT":
+    mes_s = [k for k, v in st.session_state.reponses.items() if v]
+    
+    best_m = "Indéterminé (Cas complexe)"
+    max_score = 0
+    final_soin = "Veuillez consulter un médecin pour un examen clinique complet."
+
+    for nom, (communs, signatures, soin) in DB.items():
+        score_c = len(set(mes_s) & set(communs))
+        score_s = len(set(mes_s) & set(signatures)) * 2 # Les signatures valent double
+        total = score_c + score_s
         
-        best_m = "Indéterminé (Symptômes trop vagues)"
-        max_score = 0
-        final_soin = "Veuillez consulter un médecin pour un examen clinique."
+        if total > max_score:
+            max_score = total
+            best_m = nom
+            final_soin = soin
 
-        for nom, (communs, signatures, soin) in DB.items():
-            score_c = len(set(mes_s) & set(communs))
-            score_s = len(set(mes_s) & set(signatures)) * 2 # Signatures double score
-            total = score_c + score_s
-            
-            if total > max_score:
-                max_score = total
-                best_m = nom
-                final_soin = soin
-
-        # Phrase de fin
-        if best_m == "Indéterminé":
-            st.session_state.phrase_senku = "Analyse complexe. Vos symptômes ne correspondent à aucune matrice connue. L'examen humain est requis."
-        else:
-            st.session_state.phrase_senku = f"Diagnostic établi. Probabilité de {best_m}. Ma prescription est sans appel."
-
-        st.success(f"### Résultat : {best_m}")
-        st.write(f"💬 **Senku :** {st.session_state.phrase_senku}")
-        parler(st.session_state.phrase_senku)
-
-        # RAPPORT
-        st.markdown(f"""
-        <div style="background-color: white; color: black; padding: 25px; border: 5px solid #1f1f1f; border-radius: 15px;">
-            <h2 style="text-align:center;">RAPPORT DE DIAGNOSTIC IA</h2>
-            <p><b>Points analysés :</b> 30 symptômes</p>
-            <p><b>Score de confiance :</b> {min(max_score * 10, 100)}%</p>
-            <hr>
-            <p><b>PATHOLOGIE :</b> {best_m}</p>
-            <p><b>CONDUITE À TENIR :</b> {final_soin}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if st.button("🔄 NOUVELLE ANALYSE"):
-            st.session_state.etape = "OFF"
-            st.session_state.index_q = 0
-            st.session_state.reponses = {}
-            st.rerun()
+    st.success(f"### DIAGNOSTIC ÉTABLI : {best_m}")
+    parler(f"Diagnostic terminé. Il y a une forte probabilité de {best_m}.")
+    
+    st.markdown(f"""
+    <div style="background-color: white; color: black; padding: 25px; border: 5px solid black; border-radius: 15px; font-family: Arial;">
+        <h2 style="text-align:center;">ORDONNANCE NUMÉRIQUE - DR. SENKU</h2>
+        <p><b>Statut :</b> Intelligence Artificielle Certifiée</p>
+        <p><b>Fiabilité :</b> {min(max_score * 8, 100)}%</p>
+        <hr>
+        <p><b>PATHOLOGIE DÉTECTÉE :</b> {best_m}</p>
+        <p><b>PRESCRIPTION :</b> {final_soin}</p>
+        <br>
+        <p style="font-size: 10px; color: gray;">Ceci est une démonstration technique pour un exposé scolaire.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("🔄 NOUVELLE ANALYSE"):
+        st.session_state.etape = "OFF"
+        st.session_state.index_q = 0
+        st.session_state.reponses = {}
+        st.rerun()
