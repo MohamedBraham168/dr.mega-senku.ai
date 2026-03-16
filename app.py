@@ -2,14 +2,11 @@ import streamlit as st
 from gtts import gTTS
 import base64
 import time
-import speech_recognition as sr
 
-# --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="Dr. Méga Senku IA", page_icon="🧪", layout="centered")
+# --- CONFIGURATION ---
+st.set_page_config(page_title="Dr. Méga Senku", page_icon="🧪")
 
-# --- FONCTIONS TECHNIQUES (VOIX ET MICRO) ---
-
-# Fonction pour générer et jouer la voix
+# --- FONCTION VOIX ---
 def parler(texte):
     tts = gTTS(text=texte, lang='fr')
     tts.save("voix.mp3")
@@ -18,108 +15,92 @@ def parler(texte):
         b64 = base64.b64encode(data).decode()
         md = f'<audio autoplay="true"><source src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>'
         st.markdown(md, unsafe_allow_html=True)
-    # Calcule un temps de pause approximatif pour que le GIF tourne
-    # (environ 1 seconde pour 15 caractères, minimum 2 secondes)
-    duree = max(2, len(texte) / 15)
-    return duree
 
-# Fonction pour écouter l'utilisateur via le micro
-def ecouter_micro():
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.toast("🎤 Je vous écoute...", icon="👂")
-        audio = r.listen(source)
-        try:
-            texte = r.recognize_google(audio, language="fr-FR")
-            st.success(f"Vous avez dit : {texte}")
-            return texte.lower()
-        except sr.UnknownValueError:
-            st.error("Désolé, je n'ai pas compris.")
-            return ""
-        except sr.RequestError:
-            st.error("Erreur de connexion au service de reconnaissance vocale.")
-            return ""
-
-# --- INITIALISATION DES VARIABLES (CERVEAU DE L'IA) ---
-if 'etape' not in st.session_state:
-    st.session_state.etape = "apparition" # Étapes : apparition, repos, parle, disparition
+# --- INITIALISATION DU CERVEAU (LES 50 MALADIES) ---
+if 'maladies' not in st.session_state:
+    st.session_state.liste_maladies = [
+        "Grippe", "Angine", "Gastro", "Bronchite", "Otite", "Sinusite", "Appendicite", "Intoxication", 
+        "Varicelle", "Rougeole", "Allergie", "Insolation", "Déshydratation", "Conjonctivite", "Migraine", 
+        "Cystite", "Asthme", "Laryngite", "Pneumonie", "Coqueluche", "Calcul rénal", "Anémie", 
+        "Mononucléose", "Eczéma", "Urticaire", "Sciatique", "Lumbago", "Gale", "Paludisme", "Dengue", 
+        "Zika", "Tétanos", "Rachitisme", "Arthrose", "Arthrite", "Goutte", "Ulcère", "Acné", "Insomnie", 
+        "Apnée du sommeil", "Dépression", "Anxiété", "Cholestérol", "Hypertension", "Hypotension", 
+        "Diabète", "Scorbut", "Rage", "Tuberculose", "Rhumatisme"
+    ]
+    st.session_state.etape = "OFF"
     st.session_state.score = 0
-    st.session_state.indices_maladies = []
-    # Liste simplifiée pour l'exemple, tu peux remettre tes 50 maladies
-    st.session_state.maladies = ["Grippe", "Gastro", "Angine", "Appendicite"]
-    st.session_state.diag_fini = False
-    st.session_state.texte_ia = ""
-    st.session_state.choix_user = ""
+    st.session_state.index_q = 0
 
-# --- TITRE DE L'APPLICATION ---
-st.title("👨‍🔬 Dr. Méga Senku - IA Médicale")
-
-# --- ZONE D'AFFICHAGE DE MÉGA SENKU (L'IMAGE DYNAMIQUE) ---
-robot_place = st.empty()
-
-# URLs des images (Vérifie que 'senku_repos.jpg' est bien sur ton GitHub)
+# --- IMAGES ---
 url_gif = "https://media.tenor.com/vorWA35Ph3S/mega-senku-talking.gif"
 url_repos = "senku_repos.jpg"
 
-# Logique d'affichage des images selon l'étape
-if st.session_state.etape == "apparition":
-    robot_place.image(url_gif, width=400, caption="Activation de l'IA...")
-    # Laisse le GIF jouer une fois pour l'animation d'entrée (environ 3 secondes)
-    time.sleep(3)
-    # Parle automatiquement après l'apparition
-    st.session_state.texte_ia = "Bonjour ! Je suis Méga Senku. Diagnostique médical à 10 milliards de pourcent. Quel est ton symptôme principal ?"
-    st.session_state.etape = "parle"
-    st.rerun()
+st.title("👨‍🔬 Dr. Méga Senku - IA Médicale")
+robot_place = st.empty()
 
-elif st.session_state.etape == "repos":
-    robot_place.image(url_repos, width=400, caption="Méga Senku vous écoute...")
+# --- LOGIQUE DE L'ANIMATION ET DU DIAGNOSTIC ---
 
-elif st.session_state.etape == "parle":
-    robot_place.image(url_gif, width=400, caption="Méga Senku réfléchit...")
-    duree_voix = parler(st.session_state.texte_ia)
-    # Laisse le GIF tourner pendant la durée de la voix
-    time.sleep(duree_voix)
-    # Après avoir parlé, il écoute
-    if st.session_state.diag_fini:
-        st.session_state.etape = "disparition"
-    else:
-        st.session_state.etape = "repos"
-    st.rerun()
-
-elif st.session_state.etape == "disparition":
-    robot_place.image(url_gif, width=400, caption="Désactivation de l'IA...")
-    # Laisse le GIF jouer une fois pour l'animation de sortie (environ 3 secondes)
-    time.sleep(3)
-    st.session_state.etape = "fin"
-    st.rerun()
-
-elif st.session_state.etape == "fin":
-    st.write("### Diagnostic Terminé. Merci d'avoir consulté le Dr. Méga Senku.")
-    if st.button("Recommencer"):
-        st.session_state.etape = "apparition"
-        st.session_state.score = 0
-        st.session_state.diag_fini = False
+# 1. ÉCRAN D'ACCUEIL
+if st.session_state.etape == "OFF":
+    st.write("### Prêt pour le diagnostic scientifique ?")
+    if st.button("🚀 ACTIVER MÉGA SENKU"):
+        st.session_state.etape = "APPARITION"
         st.rerun()
 
-# --- ZONE D'INTERACTION VOCALE (MICROPHONE) ---
-st.divider()
+# 2. ANIMATION D'APPARITION (GIF monte)
+elif st.session_state.etape == "APPARITION":
+    robot_place.image(url_gif, width=400)
+    time.sleep(3) # Temps du GIF qui monte
+    st.session_state.etape = "INTRO"
+    st.rerun()
 
-# N'affiche le micro que quand Méga Senku écoute
-if st.session_state.etape == "repos":
-    st.subheader("🎙️ Discussion Vocale")
-    col1, col2 = st.columns([1, 3])
+# 3. INTRODUCTION PARLÉE (GIF bouche ouverte)
+elif st.session_state.etape == "INTRO":
+    robot_place.image(url_gif, width=400)
+    msg = "Bonjour ! Je suis Méga Senku. Mon diagnostic est sûr à 10 milliards de pourcent. Dis-moi, as-tu de la fièvre ?"
+    parler(msg)
+    time.sleep(7) # Laisse le temps de parler
+    st.session_state.etape = "QUESTION"
+    st.rerun()
+
+# 4. PHASE DE QUESTIONS (Image fixe bouche fermée)
+elif st.session_state.etape == "QUESTION":
+    robot_place.image(url_repos, width=400)
+    st.write("### Répondez honnêtement :")
+    
+    col1, col2 = st.columns(2)
     with col1:
-        if st.button("🎤 PARLER", help="Cliquez pour utiliser le micro"):
-            st.session_state.choix_user = ecouter_micro()
-            if st.session_state.choix_user:
-                # Logique simplifiée de diagnostic
-                if "fièvre" in st.session_state.choix_user:
-                    st.session_state.texte_ia = "C'est noté. Fièvre détectée. As-tu aussi mal à la gorge ?"
-                elif "oui" in st.session_state.choix_user:
-                    st.session_state.texte_ia = "D'accord. Diagnostic probable à 10 milliards de pourcent : c'est une Angine. Prends soin de toi !"
-                    st.session_state.diag_fini = True
-                else:
-                    st.session_state.texte_ia = "Je n'ai pas assez d'informations. Peux-tu préciser ?"
-                
-                st.session_state.etape = "parle"
-                st.rerun()
+        if st.button("✅ OUI"):
+            st.session_state.score += 1
+            st.session_state.etape = "RESULTAT"
+            st.rerun()
+    with col2:
+        if st.button("❌ NON"):
+            st.session_state.etape = "RESULTAT"
+            st.rerun()
+
+# 5. RÉSULTAT (GIF bouche ouverte pour parler)
+elif st.session_state.etape == "RESULTAT":
+    robot_place.image(url_gif, width=400)
+    import random
+    maladie = random.choice(st.session_state.liste_maladies)
+    verdict = f"Après analyse scientifique, tu as probablement une {maladie} ! C'est logique !"
+    parler(verdict)
+    time.sleep(6)
+    st.session_state.etape = "DISPARITION"
+    st.rerun()
+
+# 6. ANIMATION DE DISPARITION (GIF descend)
+elif st.session_state.etape == "DISPARITION":
+    robot_place.image(url_gif, width=400)
+    time.sleep(3) # Temps du GIF qui descend
+    st.session_state.etape = "FIN"
+    st.rerun()
+
+# 7. ÉCRAN FINAL
+elif st.session_state.etape == "FIN":
+    st.success("Diagnostic terminé.")
+    if st.button("🔄 Redémarrer l'IA"):
+        st.session_state.etape = "OFF"
+        st.session_state.score = 0
+        st.rerun()
