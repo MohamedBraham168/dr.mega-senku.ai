@@ -6,6 +6,7 @@ import random
 # --- CONFIGURATION ---
 st.set_page_config(page_title="Dr. Méga Senku IA", page_icon="🧪")
 
+# Fonction pour la voix (gère les erreurs pour ne pas bloquer l'app)
 def parler(texte):
     try:
         tts = gTTS(text=texte, lang='fr')
@@ -18,27 +19,27 @@ def parler(texte):
     except:
         pass
 
-# --- LOGIQUE MÉDICALE ---
+# --- LOGIQUE DU DIAGNOSTIC ---
 if 'etape' not in st.session_state:
     st.session_state.etape = "OFF"
     st.session_state.index_q = 0
-    st.session_state.score_gravite = 0
+    st.session_state.score = 0
 
-# Les 10 Questions Stratégiques
+# Les 10 Questions Scientifiques
 QUESTIONS = [
-    "As-tu une fièvre supérieure à 38.5°C ?",
-    "Ressens-tu une fatigue qui t'oblige à rester au lit ?",
-    "As-tu des douleurs intenses à la tête ou aux articulations ?",
-    "As-tu la gorge très irritée ou des difficultés à avaler ?",
-    "Est-ce que tu tousses fréquemment ?",
-    "As-tu des nausées, des vomissements ou mal au ventre ?",
-    "As-tu le nez bouché ou qui coule beaucoup ?",
-    "As-tu remarqué des taches, des boutons ou des rougeurs sur ta peau ?",
-    "As-tu des difficultés à respirer profondément ?",
-    "As-tu perdu le goût des aliments ou l'odorat ?"
+    "As-tu une température corporelle supérieure à 38°C ?",
+    "Ressens-tu une fatigue anormale ou un manque d'énergie ?",
+    "As-tu des maux de tête ou des vertiges ?",
+    "As-tu des douleurs au niveau de la gorge ou du cou ?",
+    "Est-ce que tu as une toux persistante ?",
+    "As-tu des douleurs abdominales ou des nausées ?",
+    "As-tu le nez bouché ou des éternuements fréquents ?",
+    "As-tu des éruptions cutanées ou des taches sur la peau ?",
+    "Ressens-tu une gêne respiratoire ou un essoufflement ?",
+    "As-tu perdu le sens de l'odorat ou du goût récemment ?"
 ]
 
-# Les 50 Maladies classées par "type" pour plus de logique
+# Les 50 Maladies
 MALADIES = [
     "Grippe", "Angine", "Rhinopharyngite", "Gastro-entérite", "Bronchite", "Otite", "Sinusite", "Appendicite", "Intoxication", 
     "Varicelle", "Rougeole", "Allergie", "Insolation", "Déshydratation", "Conjonctivite", "Migraine", "Cystite", "Asthme", 
@@ -51,39 +52,36 @@ MALADIES = [
 st.title("👨‍🔬 Dr. Méga Senku - IA Médicale")
 robot_place = st.empty()
 
-# Utilisation des fichiers locaux sur GitHub
-gif_local = "senku_parle.gif"
-repos_local = "senku_repos.jpg"
-
-# --- INTERFACE ---
+# --- INTERFACE ET ANIMATIONS ---
 
 if st.session_state.etape == "OFF":
-    robot_place.image(repos_local, width=400)
-    st.info("Laboratoire prêt pour l'analyse.")
+    try: robot_place.image("repos.jpg", width=400)
+    except: st.info("Prêt pour l'activation.")
     if st.button("🚀 ACTIVER MÉGA SENKU"):
         st.session_state.etape = "INTRO"
         st.rerun()
 
 elif st.session_state.etape == "INTRO":
-    robot_place.image(gif_local, width=400)
-    msg = "Bonjour ! Je suis Méga Senku. Mon analyse est basée sur la science, mais je suis une IA : consulte un médecin pour confirmer."
+    try: robot_place.image("tenor.gif", width=400)
+    except: st.warning("Animation en cours...")
+    msg = "Bonjour ! Je suis Méga Senku. Mon analyse est scientifique, mais je reste une IA : consulte un médecin pour confirmer."
     parler(msg)
     st.write(f"💬 **Senku :** {msg}")
-    if st.button("COMMENCER LES TESTS"):
+    if st.button("COMMENCER LES TESTS ➡️"):
         st.session_state.etape = "QUESTIONS"
         st.rerun()
 
 elif st.session_state.etape == "QUESTIONS":
-    robot_place.image(repos_local, width=400)
+    try: robot_place.image("repos.jpg", width=400)
+    except: pass
     
-    q_actuelle = QUESTIONS[st.session_state.index_q]
-    st.write(f"### 🔬 Test n°{st.session_state.index_q + 1} / 10")
-    st.info(q_actuelle)
+    st.write(f"### 🔬 Analyse n°{st.session_state.index_q + 1} / 10")
+    st.info(QUESTIONS[st.session_state.index_q])
     
     col1, col2 = st.columns(2)
     with col1:
         if st.button("✅ OUI"):
-            st.session_state.score_gravite += 1
+            st.session_state.score += 1
             if st.session_state.index_q < 9:
                 st.session_state.index_q += 1
                 st.rerun()
@@ -100,24 +98,24 @@ elif st.session_state.etape == "QUESTIONS":
                 st.rerun()
 
 elif st.session_state.etape == "RESULTAT":
-    robot_place.image(gif_local, width=400)
+    try: robot_place.image("tenor.gif", width=400)
+    except: pass
     
-    # Logique de sélection : On utilise le score pour piocher dans la liste
-    # Si score 0, on donne une maladie légère, si score haut, une maladie plus complexe
-    random.seed(st.session_state.score_gravite) # Pour que le résultat soit constant
+    # Choix de la maladie basé sur le score pour un semblant de logique
+    random.seed(st.session_state.score)
     maladie = random.choice(MALADIES)
     
-    if st.session_state.score_gravite == 0:
-        verdict = "Analyse terminée : Aucune maladie détectée. Tu as juste besoin d'un peu de Cola et de repos !"
+    if st.session_state.score == 0:
+        verdict = "Analyse terminée : Aucun symptôme grave détecté. Repose-toi et bois de l'eau !"
     else:
-        verdict = f"Les résultats suggèrent une probabilité de {maladie}. C'est scientifiquement l'explication la plus logique !"
+        verdict = f"D'après mes calculs, il y a une probabilité de {maladie}. C'est scientifiquement l'explication la plus probable parmi mes données."
     
     parler(verdict)
-    st.success(f"⚖️ **Verdict final :** {verdict}")
-    st.error("⚠️ Attention : Ne prends aucun médicament sans l'avis d'un vrai docteur.")
+    st.success(f"⚖️ **Verdict :** {verdict}")
+    st.error("⚠️ Rappel : Cette IA ne remplace pas un avis médical réel.")
     
     if st.button("🏁 RÉINITIALISER LE LABO"):
         st.session_state.etape = "OFF"
         st.session_state.index_q = 0
-        st.session_state.score_gravite = 0
+        st.session_state.score = 0
         st.rerun()
