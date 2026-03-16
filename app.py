@@ -17,7 +17,6 @@ def parler(texte):
     except:
         pass
 
-# --- INITIALISATION ---
 if 'etape' not in st.session_state:
     st.session_state.etape = "OFF"
     st.session_state.chemin = ""
@@ -28,84 +27,77 @@ st.divider()
 
 robot_place = st.empty()
 
-# --- BASE DE DONNÉES : TRAITEMENTS ---
-SOINS = {
-    "Pneumonie Sévère": "Hospitalisation d'urgence, oxygène et antibiothérapie IV.",
-    "Grippe Infectieuse": "Repos strict, antiviraux si pris tôt, et hydratation.",
-    "Angine Bactérienne": "Cure d'antibiotiques (Amoxicilline) et repos.",
-    "Mononucléose": "Repos prolongé (plusieurs semaines) et surveillance hépatique.",
-    "Appendicite": "Chirurgie immédiate (Bloc opératoire). Ne rien manger.",
-    "Migraine avec Aura": "Triptans, obscurité totale, évitement des écrans.",
-    "Insolation / Déshydratation": "Réhydratation progressive et mise au frais.",
-    "Asthme Aigu": "Bronchodilatateurs d'urgence et corticoïdes.",
-    "Anémie Profonde": "Supplémentation ferrique et bilan sanguin complet.",
-    "Stress Post-Traumatique / Burn-out": "Repos total et suivi psychologique spécialisé.",
-    "Gastro-entérite": "Réhydratation orale et régime sans résidus.",
-    "Rhinopharyngite": "Traitement des symptômes et lavage de nez."
-}
-
-# --- L'ARBRE GÉANT (MINIMUM 10 QUESTIONS) ---
-# Nous utilisons un dictionnaire où la clé est le chemin 'O'/'N'
+# --- BASE DE DONNÉES DES QUESTIONS (Arbre Profond) ---
 ARBRE = {
     "": "Avez-vous de la fièvre ?",
-    # Branche Fièvre (O)
-    "O": "Dépasse-t-elle les 38.5°C ?",
-    "OO": "Ressentez-vous une fatigue qui vous empêche de rester debout ?",
-    "OOO": "Avez-vous des difficultés respiratoires ou une douleur thoracique ?",
-    "OOOO": "Votre toux est-elle grasse avec des sécrétions ?",
-    "OOOOO": "Est-ce que cela dure depuis plus de 3 jours ?",
-    "OOOOOO": "Avez-vous des sifflements à l'inspiration ?",
-    "OOOOOOO": "Pensez-vous avoir été exposé à un virus ?",
-    "OOOOOOOO": "Ressentez-vous une confusion mentale ?",
-    "OOOOOOOOO": "Avez-vous les lèvres bleutées ?",
-    "OOOOOOOOOO": "Pneumonie Sévère", # 10 questions si on répond O partout
+    # Branche OUI (Fièvre)
+    "O": "La fièvre est-elle apparue brutalement ?",
+    "OO": "Dépasse-t-elle les 39.5°C ?",
+    "OOO": "Ressentez-vous une raideur dans la nuque ?",
+    "OOOO": "Avez-vous des taches violacées sur la peau ?",
+    "OOOOO": "MÉNINGITE (Urgence Absolue)", # Diagnostic rapide si grave
+    "OOON": "Avez-vous une toux avec des douleurs thoraciques ?",
+    "OOONO": "Est-ce que vous crachez du sang ?",
+    "OOONOO": "PNEUMONIE SÉVÈRE",
+    "ON": "Est-ce une fièvre modérée avec fatigue ?",
+    "ONO": "Avez-vous les ganglions du cou gonflés ?",
+    "ONOO": "Est-ce que vous avez du mal à ouvrir la bouche ?",
+    "ONOOO": "ANGINE BLANCHE",
+    "ONON": "Avez-vous des courbatures généralisées ?",
+    "ONONO": "GRIPPE SAISONNIÈRE",
     
-    # Branche de levée de doute (Exemple si Non à un moment)
-    "OOOOOOOOON": "Grippe Infectieuse",
-    
-    # Branche Sans Fièvre (N)
-    "N": "Ressentez-vous une douleur précise ?",
-    "NN": "Est-ce une douleur dans la zone abdominale ?",
-    "NNO": "Est-ce situé en bas à droite du ventre ?",
-    "NNOO": "La douleur est-elle pire quand vous marchez ?",
-    "NNOOO": "Avez-vous perdu l'appétit ?",
-    "NNOOOO": "Avez-vous des nausées ?",
-    "NNOOOOO": "Avez-vous la langue blanche ?",
-    "NNOOOOOO": "Ressentez-vous une accélération cardiaque ?",
-    "NNOOOOOOO": "Est-ce que la douleur est apparue brutalement ?",
-    "NNOOOOOOOO": "Appendicite", # 10 questions ici aussi
-    
-    "NNOOOOOOON": "Gastro-entérite",
-
-    # Branche Tête
-    "NNN": "Est-ce une douleur à la tête ?",
-    "NNNO": "Est-ce accompagné de vertiges ?",
-    "NNNOO": "La lumière est-elle insupportable ?",
-    "NNNOOO": "Est-ce un côté précis de la tête ?",
-    "NNNOOOO": "Est-ce lancinant (comme des battements) ?",
-    "NNNOOOOO": "Avez-vous des fourmillements ?",
-    "NNNOOOOOO": "Est-ce que cela arrive après un stress ?",
-    "NNNOOOOOOO": "Avez-vous pris des médicaments sans effet ?",
-    "NNNOOOOOOOO": "La douleur est-elle revenue plusieurs fois ce mois-ci ?",
-    "NNNOOOOOOOOO": "Migraine avec Aura"
+    # Branche NON (Pas de fièvre)
+    "N": "Ressentez-vous une douleur physique ?",
+    "NO": "La douleur est-elle abdominale (ventre) ?",
+    "NOO": "Est-ce situé en bas à droite ?",
+    "NOOO": "La douleur augmente-t-elle quand vous sautez ou marchez ?",
+    "NOOOO": "Avez-vous des nausées ?",
+    "NOOOOO": "APPENDICITE",
+    "NON": "La douleur est-elle dans la tête ?",
+    "NONO": "Est-ce que la lumière vous est insupportable ?",
+    "NONOO": "Est-ce accompagné de vomissements ?",
+    "NONOOO": "MIGRAINE CHRONIQUE",
+    "NN": "Est-ce un problème respiratoire ?",
+    "NNO": "Entendez-vous un sifflement quand vous expirez ?",
+    "NNOO": "Est-ce que cela empire la nuit ?",
+    "NNOOO": "ASTHME",
+    "NNN": "Est-ce une fatigue intense ?",
+    "NNNO": "Avez-vous le teint très pâle ?",
+    "NNNOO": "ANÉMIE SÉVÈRE",
+    "NNNN": "Sentez-vous un stress psychologique important ?",
+    "NNNNO": "BURN-OUT / ÉPUISEMENT"
 }
 
-# --- LOGIQUE D'AFFICHAGE ---
+# Questions de "Levée de doute" si le chemin est trop long
+QUESTIONS_SUPPLEMENTAIRES = [
+    "Ressentez-vous une accélération de votre rythme cardiaque ?",
+    "Avez-vous des vertiges quand vous vous levez ?",
+    "Vos symptômes sont-ils plus forts le matin ?",
+    "Avez-vous pris un médicament qui n'a pas fonctionné ?",
+    "Est-ce que cette douleur vous empêche de dormir ?",
+    "Avez-vous voyagé récemment à l'étranger ?",
+    "Y a-t-il des cas similaires dans votre entourage ?",
+    "Ressentez-vous un engourdissement dans les membres ?",
+    "Avez-vous une perte d'appétit totale ?",
+    "L'IA a besoin d'une dernière confirmation : vos symptômes sont-ils stables ?"
+]
+
+# --- LOGIQUE ---
 
 if st.session_state.etape == "OFF":
     try: robot_place.image("repos.jpg", width=400)
     except: pass
-    if st.button("🚀 ACTIVER L'IA EXPERTE"):
+    if st.button("🚀 ACTIVER LE SCANNER MÉDICAL"):
         st.session_state.etape = "INTRO"
         st.rerun()
 
 elif st.session_state.etape == "INTRO":
     try: robot_place.image("tenor.gif", width=400)
     except: pass
-    msg = "Un médecin humain pose des questions au hasard. Moi, je parcours un arbre de probabilités à 10 milliards de pourcent. Préparation du scan complet."
-    st.write(f"**Senku :** {msg}")
+    msg = "L'humain s'arrête après 3 questions. Ma logique binaire va explorer chaque branche de votre système biologique. Scan complet activé."
+    st.write(f"💬 **Senku :** {msg}")
     parler(msg)
-    if st.button("LANCER LE PROTOCOLE"):
+    if st.button("DÉMARRER"):
         st.session_state.etape = "QUESTIONS"
         st.rerun()
 
@@ -114,59 +106,73 @@ elif st.session_state.etape == "QUESTIONS":
     except: pass
     
     chemin = st.session_state.chemin
-    question_actuelle = ARBRE.get(chemin)
-
-    # Si le chemin n'existe pas encore dans l'arbre, on crée une question de sécurité
-    if not question_actuelle:
-        question_actuelle = "L'IA analyse vos données spécifiques... Confirmez-vous que les symptômes persistent ?"
-
-    if "?" not in question_actuelle:
-        st.session_state.etape = "RESULTAT"
-        st.rerun()
+    nb_questions = len(chemin)
+    
+    # 1. On cherche dans l'arbre principal
+    sujet = ARBRE.get(chemin)
+    
+    # 2. Si on n'est pas encore à 10 questions, on force des questions supplémentaires
+    if nb_questions < 10:
+        if sujet and "?" in sujet:
+            question_a_poser = sujet
+        else:
+            # Si l'arbre est fini mais qu'on a moins de 10 questions, on pioche dans les suppléments
+            index_supp = nb_questions % len(QUESTIONS_SUPPLEMENTAIRES)
+            question_a_poser = f"[Analyse de précision] {QUESTIONS_SUPPLEMENTAIRES[index_supp]}"
     else:
-        nb_q = len(chemin) + 1
-        st.write(f"📊 **Analyse n°{nb_q}**")
-        st.progress(min(nb_q * 10, 100))
-        st.info(question_actuelle)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("✅ OUI"):
-                st.session_state.chemin += "O"
+        # Après 10 questions, si on a un diagnostic (pas de point d'interrogation), on finit
+        if sujet and "?" not in sujet:
+            st.session_state.etape = "RESULTAT"
+            st.rerun()
+        else:
+            # Sinon on continue un peu pour être sûr
+            index_supp = nb_questions % len(QUESTIONS_SUPPLEMENTAIRES)
+            question_a_poser = f"[Levée de doute finale] {QUESTIONS_SUPPLEMENTAIRES[index_supp]}"
+            if nb_questions > 12: # Sécurité pour ne pas être infini non plus
+                st.session_state.etape = "RESULTAT"
                 st.rerun()
-        with col2:
-            if st.button("❌ NON"):
-                st.session_state.chemin += "N"
-                st.rerun()
+
+    st.write(f"📊 **Examen biologique n°{nb_questions + 1}**")
+    st.progress(min(nb_questions * 10, 100))
+    st.info(question_a_poser)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ OUI"):
+            st.session_state.chemin += "O"
+            st.rerun()
+    with col2:
+        if st.button("❌ NON"):
+            st.session_state.chemin += "N"
+            st.rerun()
 
 elif st.session_state.etape == "RESULTAT":
     try: robot_place.image("tenor.gif", width=400)
     except: pass
     
-    maladie = ARBRE.get(st.session_state.chemin, "Analyse complexe : Cas hors base de données standard.")
-    traitement = SOINS.get(maladie, "Repos et surveillance hospitalière nécessaire.")
-    certitude = "98%" if len(st.session_state.chemin) >= 10 else "75% (Diagnostic rapide)"
+    # On cherche le dernier diagnostic connu dans le chemin
+    diag = "Pathologie complexe (Nécessite Scanner)"
+    for i in range(len(st.session_state.chemin), 0, -1):
+        test_chemin = st.session_state.chemin[:i]
+        if test_chemin in ARBRE and "?" not in ARBRE[test_chemin]:
+            diag = ARBRE[test_chemin]
+            break
 
-    st.success(f"### Diagnostic final : {maladie}")
-    st.write(f"**Indice de certitude algorithmique : {certitude}**")
-    parler(f"Diagnostic : {maladie}. Certitude {certitude}.")
+    st.success(f"### Diagnostic final : {diag}")
+    parler(f"Analyse terminée après {len(st.session_state.chemin)} tests. Résultat : {diag}.")
 
-    # L'ORDONNANCE
     st.markdown(f"""
-    <div style="background-color: white; color: black; padding: 25px; border: 4px solid #1f1f1f; font-family: 'Arial';">
-        <h2 style="text-align:center;">ORDONNANCE IA v4.0</h2>
-        <p><b>Diagnostic :</b> {maladie}</p>
-        <p><b>Confiance :</b> {certitude}</p>
+    <div style="background-color: white; color: black; padding: 20px; border: 3px solid black;">
+        <h2 style="text-align:center;">ORDONNANCE IA MÉGAVERSION</h2>
+        <p><b>Diagnostic :</b> {diag}</p>
+        <p><b>Niveau de scan :</b> {len(st.session_state.chemin)} étapes logiques</p>
         <hr>
-        <p><b>PRESCRIPTION :</b></p>
-        <p style="font-size: 20px; color: blue;">👉 {traitement}</p>
-        <br>
-        <p style="font-size: 10px;">Cette prescription est issue d'une branche logique de {len(st.session_state.chemin)} étapes.</p>
+        <p>👉 Repos strict et suivi des constantes vitales.</p>
+        <p style="font-size:10px;">Généré par Dr. Méga Senku - IA de démonstration.</p>
     </div>
     """, unsafe_allow_html=True)
     
-    if st.button("🔄 NOUVEL SCAN"):
+    if st.button("🔄 REFAIRE UN SCAN"):
         st.session_state.etape = "OFF"
         st.session_state.chemin = ""
         st.rerun()
-    
