@@ -2,11 +2,14 @@ import streamlit as st
 from gtts import gTTS
 import base64
 import time
+import speech_recognition as sr
 
 # --- CONFIGURATION DE LA PAGE ---
-st.set_page_config(page_title="Dr. Méga Senku IA", page_icon="🧪")
+st.set_page_config(page_title="Dr. Méga Senku IA", page_icon="🧪", layout="centered")
 
-# --- FONCTION VOIX ---
+# --- FONCTIONS TECHNIQUES (VOIX ET MICRO) ---
+
+# Fonction pour générer et jouer la voix
 def parler(texte):
     tts = gTTS(text=texte, lang='fr')
     tts.save("voix.mp3")
@@ -15,85 +18,108 @@ def parler(texte):
         b64 = base64.b64encode(data).decode()
         md = f'<audio autoplay="true"><source src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>'
         st.markdown(md, unsafe_allow_html=True)
+    # Calcule un temps de pause approximatif pour que le GIF tourne
+    # (environ 1 seconde pour 15 caractères, minimum 2 secondes)
+    duree = max(2, len(texte) / 15)
+    return duree
 
-# --- LE CERVEAU : LES 50 MALADIES ---
-if 'scores' not in st.session_state:
-    maladies = [
-        "Grippe", "Angine Blanche", "Angine Rouge", "Rhinopharyngite", "Gastro", 
-        "Bronchite", "Otite", "Sinusite", "Appendicite", "Intoxication", 
-        "Varicelle", "Rougeole", "Allergie", "Insolation", "Déshydratation", 
-        "Conjonctivite", "Migraine", "Cystite", "Asthme", "Laryngite",
-        "Pneumonie", "Coqueluche", "Calcul rénal", "Anémie", "Mononucléose",
-        "Eczéma", "Urticaire", "Sciatique", "Lumbago", "Gale",
-        "Paludisme", "Dengue", "Zika", "Tétanos", "Rachitisme",
-        "Arthrose", "Arthrite", "Goutte", "Ulcère", "Acné",
-        "Insomnie", "Apnée du sommeil", "Dépression", "Anxiété", "Cholestérol",
-        "Hypertension", "Hypotension", "Diabète", "Scurvy", "Rage"
-    ]
-    st.session_state.scores = {m: 0 for m in maladies}
-    st.session_state.idx = 0
-    st.session_state.fini = False
-    st.session_state.parle = False
+# Fonction pour écouter l'utilisateur via le micro
+def ecouter_micro():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.toast("🎤 Je vous écoute...", icon="👂")
+        audio = r.listen(source)
+        try:
+            texte = r.recognize_google(audio, language="fr-FR")
+            st.success(f"Vous avez dit : {texte}")
+            return texte.lower()
+        except sr.UnknownValueError:
+            st.error("Désolé, je n'ai pas compris.")
+            return ""
+        except sr.RequestError:
+            st.error("Erreur de connexion au service de reconnaissance vocale.")
+            return ""
 
-# --- INTERFACE VISUELLE ---
+# --- INITIALISATION DES VARIABLES (CERVEAU DE L'IA) ---
+if 'etape' not in st.session_state:
+    st.session_state.etape = "apparition" # Étapes : apparition, repos, parle, disparition
+    st.session_state.score = 0
+    st.session_state.indices_maladies = []
+    # Liste simplifiée pour l'exemple, tu peux remettre tes 50 maladies
+    st.session_state.maladies = ["Grippe", "Gastro", "Angine", "Appendicite"]
+    st.session_state.diag_fini = False
+    st.session_state.texte_ia = ""
+    st.session_state.choix_user = ""
+
+# --- TITRE DE L'APPLICATION ---
 st.title("👨‍🔬 Dr. Méga Senku - IA Médicale")
 
+# --- ZONE D'AFFICHAGE DE MÉGA SENKU (L'IMAGE DYNAMIQUE) ---
 robot_place = st.empty()
 
-# Gestion des images (Assure-toi d'avoir ces fichiers sur GitHub)
-if st.session_state.parle:
-    # Le GIF (bouche ouverte/mouvement)
-    robot_place.image("https://media.tenor.com/vorWA35Ph3S/mega-senku-talking.gif", width=400)
-else:
-    # L'image que je viens de te faire (bouche fermée)
-    # Renomme ton image 'senku_repos.jpg' sur GitHub
-    robot_place.image("senku_repos.jpg", width=400)
+# URLs des images (Vérifie que 'senku_repos.jpg' est bien sur ton GitHub)
+url_gif = "https://media.tenor.com/vorWA35Ph3S/mega-senku-talking.gif"
+url_repos = "senku_repos.jpg"
 
-# --- LOGIQUE DU QUESTIONNAIRE ---
-questions = [
-    ("Bonjour ! Je suis Méga Senku. Dites-moi, avez-vous de la fièvre ?", ["Grippe", "Angine Blanche", "Angine Rouge", "Otite", "Pneumonie", "Paludisme"]),
-    ("Avez-vous des douleurs abdominales ?", ["Gastro", "Appendicite", "Intoxication", "Ulcère", "Calcul rénal"]),
-    ("Avez-vous des boutons ou des rougeurs ?", ["Varicelle", "Rougeole", "Eczéma", "Urticaire", "Zika"]),
-    ("Est-ce que votre gorge est douloureuse ?", ["Angine Blanche", "Angine Rouge", "Laryngite", "Rhinopharyngite"]),
-    ("Avez-vous du mal à respirer ?", ["Asthme", "Bronchite", "Pneumonie", "Coqueluche"]),
-    ("Souffrez-vous de maux de tête ?", ["Migraine", "Sinusite", "Hypertension", "Insolation"]),
-]
+# Logique d'affichage des images selon l'étape
+if st.session_state.etape == "apparition":
+    robot_place.image(url_gif, width=400, caption="Activation de l'IA...")
+    # Laisse le GIF jouer une fois pour l'animation d'entrée (environ 3 secondes)
+    time.sleep(3)
+    # Parle automatiquement après l'apparition
+    st.session_state.texte_ia = "Bonjour ! Je suis Méga Senku. Diagnostique médical à 10 milliards de pourcent. Quel est ton symptôme principal ?"
+    st.session_state.etape = "parle"
+    st.rerun()
 
-if not st.session_state.fini and st.session_state.idx < len(questions):
-    q_texte, cibles = questions[st.session_state.idx]
-    
-    st.write(f"### 💬 Question : {q_texte}")
-    
-    if st.button("▶️ ÉCOUTER L'IA"):
-        st.session_state.parle = True
-        parler(q_texte)
-        # On simule un temps de parole avant de fermer la bouche
-        # time.sleep(2) # Enlevé pour éviter les bugs Streamlit, l'image changera au prochain clic
+elif st.session_state.etape == "repos":
+    robot_place.image(url_repos, width=400, caption="Méga Senku vous écoute...")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✅ OUI"):
-            st.session_state.parle = False
-            for m in cibles: st.session_state.scores[m] += 1
-            gagnant = max(st.session_state.scores, key=st.session_state.scores.get)
-            if st.session_state.scores[gagnant] >= 2: st.session_state.fini = True
-            else: st.session_state.idx += 1
-            st.rerun()
-    with col2:
-        if st.button("❌ NON"):
-            st.session_state.parle = False
-            st.session_state.idx += 1
-            st.rerun()
-else:
-    st.session_state.fini = True
-    gagnant = max(st.session_state.scores, key=st.session_state.scores.get)
-    resultat = f"Diagnostic de Méga Senku : C'est une {gagnant} ! 10 milliards de pourcent de certitude !"
-    st.success(resultat)
-    if st.button("🔊 Entendre le verdict"):
-        parler(resultat)
-    
+elif st.session_state.etape == "parle":
+    robot_place.image(url_gif, width=400, caption="Méga Senku réfléchit...")
+    duree_voix = parler(st.session_state.texte_ia)
+    # Laisse le GIF tourner pendant la durée de la voix
+    time.sleep(duree_voix)
+    # Après avoir parlé, il écoute
+    if st.session_state.diag_fini:
+        st.session_state.etape = "disparition"
+    else:
+        st.session_state.etape = "repos"
+    st.rerun()
+
+elif st.session_state.etape == "disparition":
+    robot_place.image(url_gif, width=400, caption="Désactivation de l'IA...")
+    # Laisse le GIF jouer une fois pour l'animation de sortie (environ 3 secondes)
+    time.sleep(3)
+    st.session_state.etape = "fin"
+    st.rerun()
+
+elif st.session_state.etape == "fin":
+    st.write("### Diagnostic Terminé. Merci d'avoir consulté le Dr. Méga Senku.")
     if st.button("Recommencer"):
-        st.session_state.scores = {m: 0 for m in st.session_state.scores}
-        st.session_state.idx = 0
-        st.session_state.fini = False
+        st.session_state.etape = "apparition"
+        st.session_state.score = 0
+        st.session_state.diag_fini = False
         st.rerun()
+
+# --- ZONE D'INTERACTION VOCALE (MICROPHONE) ---
+st.divider()
+
+# N'affiche le micro que quand Méga Senku écoute
+if st.session_state.etape == "repos":
+    st.subheader("🎙️ Discussion Vocale")
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        if st.button("🎤 PARLER", help="Cliquez pour utiliser le micro"):
+            st.session_state.choix_user = ecouter_micro()
+            if st.session_state.choix_user:
+                # Logique simplifiée de diagnostic
+                if "fièvre" in st.session_state.choix_user:
+                    st.session_state.texte_ia = "C'est noté. Fièvre détectée. As-tu aussi mal à la gorge ?"
+                elif "oui" in st.session_state.choix_user:
+                    st.session_state.texte_ia = "D'accord. Diagnostic probable à 10 milliards de pourcent : c'est une Angine. Prends soin de toi !"
+                    st.session_state.diag_fini = True
+                else:
+                    st.session_state.texte_ia = "Je n'ai pas assez d'informations. Peux-tu préciser ?"
+                
+                st.session_state.etape = "parle"
+                st.rerun()
