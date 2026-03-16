@@ -4,9 +4,8 @@ import base64
 import random
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="Dr. Méga Senku IA", page_icon="🧪")
+st.set_page_config(page_title="IA vs MÉDECIN", page_icon="🧪")
 
-# Fonction pour la voix (gère les erreurs pour ne pas bloquer l'app)
 def parler(texte):
     try:
         tts = gTTS(text=texte, lang='fr')
@@ -19,27 +18,27 @@ def parler(texte):
     except:
         pass
 
-# --- LOGIQUE DU DIAGNOSTIC ---
+# --- INITIALISATION ---
 if 'etape' not in st.session_state:
     st.session_state.etape = "OFF"
     st.session_state.index_q = 0
     st.session_state.score = 0
 
-# Les 10 Questions Scientifiques
+# LES QUESTIONS (Précises pour simuler un vrai diagnostic)
 QUESTIONS = [
-    "As-tu une température corporelle supérieure à 38°C ?",
-    "Ressens-tu une fatigue anormale ou un manque d'énergie ?",
-    "As-tu des maux de tête ou des vertiges ?",
-    "As-tu des douleurs au niveau de la gorge ou du cou ?",
-    "Est-ce que tu as une toux persistante ?",
-    "As-tu des douleurs abdominales ou des nausées ?",
-    "As-tu le nez bouché ou des éternuements fréquents ?",
-    "As-tu des éruptions cutanées ou des taches sur la peau ?",
-    "Ressens-tu une gêne respiratoire ou un essoufflement ?",
-    "As-tu perdu le sens de l'odorat ou du goût récemment ?"
+    "Température supérieure à 38.5°C ?",
+    "Fatigue intense empêchant de se lever ?",
+    "Douleurs thoraciques ou essoufflement ?",
+    "Gorge inflammée ou ganglions gonflés ?",
+    "Toux persistante avec sécrétions ?",
+    "Douleurs abdominales aiguës ?",
+    "Nez bouché et perte d'odorat ?",
+    "Éruptions cutanées ou taches bizarres ?",
+    "Douleurs articulaires ou courbatures ?",
+    "Maux de tête violents et sensibilité à la lumière ?"
 ]
 
-# Les 50 Maladies
+# LISTE DES 50 MALADIES
 MALADIES = [
     "Grippe", "Angine", "Rhinopharyngite", "Gastro-entérite", "Bronchite", "Otite", "Sinusite", "Appendicite", "Intoxication", 
     "Varicelle", "Rougeole", "Allergie", "Insolation", "Déshydratation", "Conjonctivite", "Migraine", "Cystite", "Asthme", 
@@ -50,71 +49,62 @@ MALADIES = [
 ]
 
 st.title("👨‍🔬 Dr. Méga Senku - IA Médicale")
+st.write("**Problématique : L'IA peut-elle surpasser le diagnostic humain ?**")
 robot_place = st.empty()
 
-# --- INTERFACE ET ANIMATIONS ---
+# --- INTERFACE ---
 
 if st.session_state.etape == "OFF":
-    try: robot_place.image("repos.jpg", width=400)
-    except: st.info("Prêt pour l'activation.")
-    if st.button("🚀 ACTIVER MÉGA SENKU"):
+    robot_place.image("repos.jpg", width=400)
+    if st.button("🚀 ACTIVER LE CERVEAU ARTIFICIEL"):
         st.session_state.etape = "INTRO"
         st.rerun()
 
 elif st.session_state.etape == "INTRO":
-    try: robot_place.image("tenor.gif", width=400)
-    except: st.warning("Animation en cours...")
-    msg = "Bonjour ! Je suis Méga Senku. Mon analyse est scientifique, mais je reste une IA : consulte un médecin pour confirmer."
+    robot_place.image("tenor.gif", width=400)
+    msg = "L'humain fait des erreurs, la science n'en fait pas. Je vais prouver que mon algorithme est plus efficace qu'un médecin de campagne. Analyse prête à 10 milliards de pourcent !"
     parler(msg)
     st.write(f"💬 **Senku :** {msg}")
-    if st.button("COMMENCER LES TESTS ➡️"):
+    if st.button("LANCER LE DIAGNOSTIC"):
         st.session_state.etape = "QUESTIONS"
         st.rerun()
 
 elif st.session_state.etape == "QUESTIONS":
-    try: robot_place.image("repos.jpg", width=400)
-    except: pass
-    
-    st.write(f"### 🔬 Analyse n°{st.session_state.index_q + 1} / 10")
+    robot_place.image("repos.jpg", width=400)
+    st.write(f"### Collecte de données n°{st.session_state.index_q + 1} / 10")
     st.info(QUESTIONS[st.session_state.index_q])
-    
     col1, col2 = st.columns(2)
     with col1:
         if st.button("✅ OUI"):
             st.session_state.score += 1
-            if st.session_state.index_q < 9:
-                st.session_state.index_q += 1
-                st.rerun()
-            else:
-                st.session_state.etape = "RESULTAT"
-                st.rerun()
+            if st.session_state.index_q < 9: st.session_state.index_q += 1
+            else: st.session_state.etape = "RESULTAT"
+            st.rerun()
     with col2:
         if st.button("❌ NON"):
-            if st.session_state.index_q < 9:
-                st.session_state.index_q += 1
-                st.rerun()
-            else:
-                st.session_state.etape = "RESULTAT"
-                st.rerun()
+            if st.session_state.index_q < 9: st.session_state.index_q += 1
+            else: st.session_state.etape = "RESULTAT"
+            st.rerun()
 
 elif st.session_state.etape == "RESULTAT":
-    try: robot_place.image("tenor.gif", width=400)
-    except: pass
+    robot_place.image("tenor.gif", width=400)
     
-    # Choix de la maladie basé sur le score pour un semblant de logique
+    # Choix de la maladie
     random.seed(st.session_state.score)
     maladie = random.choice(MALADIES)
     
     if st.session_state.score == 0:
-        verdict = "Analyse terminée : Aucun symptôme grave détecté. Repose-toi et bois de l'eau !"
+        verdict = "Mes capteurs n'indiquent aucune anomalie biologique. Ton corps est sain. Pas besoin d'un humain pour confirmer l'évidence !"
     else:
-        verdict = f"D'après mes calculs, il y a une probabilité de {maladie}. C'est scientifiquement l'explication la plus probable parmi mes données."
+        verdict = f"Diagnostic final : {maladie}. Ma précision logicielle dépasse les capacités d'un cerveau humain fatigué. La médecine du futur est là !"
     
     parler(verdict)
-    st.success(f"⚖️ **Verdict :** {verdict}")
-    st.error("⚠️ Rappel : Cette IA ne remplace pas un avis médical réel.")
+    st.success(verdict)
     
-    if st.button("🏁 RÉINITIALISER LE LABO"):
+    st.write("---")
+    st.markdown("*Note de l'exposé : Cet exemple montre comment l'IA peut s'affirmer, mais soulève la question de la responsabilité légale sans humain derrière.*")
+    
+    if st.button("🏁 RÉINITIALISER"):
         st.session_state.etape = "OFF"
         st.session_state.index_q = 0
         st.session_state.score = 0
