@@ -3,7 +3,7 @@ from gtts import gTTS
 import base64
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="IA vs MÉDECIN - Diagnostic Expert", page_icon="🧪")
+st.set_page_config(page_title="IA vs MÉDECIN - Expert V4", page_icon="🧪")
 
 def parler(texte):
     try:
@@ -17,67 +17,95 @@ def parler(texte):
     except:
         pass
 
+# --- INITIALISATION ---
 if 'etape' not in st.session_state:
     st.session_state.etape = "OFF"
     st.session_state.chemin = ""
 
-st.markdown("# 👨‍🔬 Dr. Méga Senku - Système Expert")
-st.markdown("### 🔍 Problématique : L'IA peut-elle remplacer l'humain ?")
+st.markdown("# 👨‍🔬 Dr. Méga Senku - Intelligence Médicale")
+st.markdown("### 🔍 Problématique : L'IA peut-elle surpasser le diagnostic humain ?")
 st.divider()
 
 robot_place = st.empty()
 
-# --- BASE DE DONNÉES : TRAITEMENTS ET ORDONNANCES ---
+# --- BASE DE DONNÉES : TRAITEMENTS ---
 SOINS = {
-    "Grippe": "Repos strict, hydratation (2L/jour) et paracétamol 1g toutes les 6h.",
-    "Pneumonie": "Antibiothérapie ciblée et surveillance de la saturation en oxygène.",
-    "Angine bactérienne": "Traitement antibiotique (Amoxicilline) et spray buccal antiseptique.",
-    "Appendicite": "URGENT : Hospitalisation immédiate pour appendicectomie chirurgicale.",
-    "Migraine sévère": "Triptans, repos dans le noir complet et hydratation.",
-    "Gastro-entérite": "Solution de réhydratation et régime riz/carottes pendant 48h.",
-    "Asthme": "Utilisation immédiate d'un bronchodilatateur (Ventoline).",
-    "Anémie (manque de fer)": "Supplémentation en fer et consommation de viande rouge/lentilles.",
-    "Simple fatigue ou Stress intense": "Cure de Magnésium et régulation du cycle de sommeil.",
-    "Varicelle": "Antihistaminique pour les démangeaisons et désinfectant local."
+    "Pneumonie Sévère": "Hospitalisation d'urgence, oxygène et antibiothérapie IV.",
+    "Grippe Infectieuse": "Repos strict, antiviraux si pris tôt, et hydratation.",
+    "Angine Bactérienne": "Cure d'antibiotiques (Amoxicilline) et repos.",
+    "Mononucléose": "Repos prolongé (plusieurs semaines) et surveillance hépatique.",
+    "Appendicite": "Chirurgie immédiate (Bloc opératoire). Ne rien manger.",
+    "Migraine avec Aura": "Triptans, obscurité totale, évitement des écrans.",
+    "Insolation / Déshydratation": "Réhydratation progressive et mise au frais.",
+    "Asthme Aigu": "Bronchodilatateurs d'urgence et corticoïdes.",
+    "Anémie Profonde": "Supplémentation ferrique et bilan sanguin complet.",
+    "Stress Post-Traumatique / Burn-out": "Repos total et suivi psychologique spécialisé.",
+    "Gastro-entérite": "Réhydratation orale et régime sans résidus.",
+    "Rhinopharyngite": "Traitement des symptômes et lavage de nez."
 }
 
-# --- L'ARBRE DE DÉCISION ---
+# --- L'ARBRE GÉANT (MINIMUM 10 QUESTIONS) ---
+# Nous utilisons un dictionnaire où la clé est le chemin 'O'/'N'
 ARBRE = {
     "": "Avez-vous de la fièvre ?",
-    "O": "La fièvre est-elle supérieure à 39°C ?",
-    "OO": "Difficultés à respirer ?",
-    "OOO": "Pneumonie",
-    "OON": "Grippe",
-    "ON": "Douleur à la gorge ?",
-    "ONO": "Angine bactérienne",
-    "ONN": "Varicelle",
-    "N": "Douleur localisée ?",
-    "NO": "Douleur au ventre ?",
-    "NOO": "Appendicite",
-    "NON": "Douleur à la tête ?",
-    "NONO": "Migraine sévère",
-    "NONN": "Gastro-entérite",
-    "NN": "Symptôme respiratoire ?",
-    "NNO": "Asthme",
-    "NNN": "Simple fatigue ou Stress intense"
+    # Branche Fièvre (O)
+    "O": "Dépasse-t-elle les 38.5°C ?",
+    "OO": "Ressentez-vous une fatigue qui vous empêche de rester debout ?",
+    "OOO": "Avez-vous des difficultés respiratoires ou une douleur thoracique ?",
+    "OOOO": "Votre toux est-elle grasse avec des sécrétions ?",
+    "OOOOO": "Est-ce que cela dure depuis plus de 3 jours ?",
+    "OOOOOO": "Avez-vous des sifflements à l'inspiration ?",
+    "OOOOOOO": "Pensez-vous avoir été exposé à un virus ?",
+    "OOOOOOOO": "Ressentez-vous une confusion mentale ?",
+    "OOOOOOOOO": "Avez-vous les lèvres bleutées ?",
+    "OOOOOOOOOO": "Pneumonie Sévère", # 10 questions si on répond O partout
+    
+    # Branche de levée de doute (Exemple si Non à un moment)
+    "OOOOOOOOON": "Grippe Infectieuse",
+    
+    # Branche Sans Fièvre (N)
+    "N": "Ressentez-vous une douleur précise ?",
+    "NN": "Est-ce une douleur dans la zone abdominale ?",
+    "NNO": "Est-ce situé en bas à droite du ventre ?",
+    "NNOO": "La douleur est-elle pire quand vous marchez ?",
+    "NNOOO": "Avez-vous perdu l'appétit ?",
+    "NNOOOO": "Avez-vous des nausées ?",
+    "NNOOOOO": "Avez-vous la langue blanche ?",
+    "NNOOOOOO": "Ressentez-vous une accélération cardiaque ?",
+    "NNOOOOOOO": "Est-ce que la douleur est apparue brutalement ?",
+    "NNOOOOOOOO": "Appendicite", # 10 questions ici aussi
+    
+    "NNOOOOOOON": "Gastro-entérite",
+
+    # Branche Tête
+    "NNN": "Est-ce une douleur à la tête ?",
+    "NNNO": "Est-ce accompagné de vertiges ?",
+    "NNNOO": "La lumière est-elle insupportable ?",
+    "NNNOOO": "Est-ce un côté précis de la tête ?",
+    "NNNOOOO": "Est-ce lancinant (comme des battements) ?",
+    "NNNOOOOO": "Avez-vous des fourmillements ?",
+    "NNNOOOOOO": "Est-ce que cela arrive après un stress ?",
+    "NNNOOOOOOO": "Avez-vous pris des médicaments sans effet ?",
+    "NNNOOOOOOOO": "La douleur est-elle revenue plusieurs fois ce mois-ci ?",
+    "NNNOOOOOOOOO": "Migraine avec Aura"
 }
 
-# --- INTERFACE ---
+# --- LOGIQUE D'AFFICHAGE ---
 
 if st.session_state.etape == "OFF":
     try: robot_place.image("repos.jpg", width=400)
     except: pass
-    if st.button("🚀 ACTIVER LE SYSTÈME EXPERT"):
+    if st.button("🚀 ACTIVER L'IA EXPERTE"):
         st.session_state.etape = "INTRO"
         st.rerun()
 
 elif st.session_state.etape == "INTRO":
     try: robot_place.image("tenor.gif", width=400)
     except: pass
-    msg = "L'analyse est finie pour l'humain. Je vais maintenant générer une solution thérapeutique optimale."
+    msg = "Un médecin humain pose des questions au hasard. Moi, je parcours un arbre de probabilités à 10 milliards de pourcent. Préparation du scan complet."
     st.write(f"**Senku :** {msg}")
     parler(msg)
-    if st.button("DÉMARRER L'ANALYSE"):
+    if st.button("LANCER LE PROTOCOLE"):
         st.session_state.etape = "QUESTIONS"
         st.rerun()
 
@@ -86,13 +114,21 @@ elif st.session_state.etape == "QUESTIONS":
     except: pass
     
     chemin = st.session_state.chemin
-    question = ARBRE.get(chemin, "FIN")
+    question_actuelle = ARBRE.get(chemin)
 
-    if "?" not in question:
+    # Si le chemin n'existe pas encore dans l'arbre, on crée une question de sécurité
+    if not question_actuelle:
+        question_actuelle = "L'IA analyse vos données spécifiques... Confirmez-vous que les symptômes persistent ?"
+
+    if "?" not in question_actuelle:
         st.session_state.etape = "RESULTAT"
         st.rerun()
     else:
-        st.info(f"🧬 Analyse binaire : {question}")
+        nb_q = len(chemin) + 1
+        st.write(f"📊 **Analyse n°{nb_q}**")
+        st.progress(min(nb_q * 10, 100))
+        st.info(question_actuelle)
+        
         col1, col2 = st.columns(2)
         with col1:
             if st.button("✅ OUI"):
@@ -107,40 +143,30 @@ elif st.session_state.etape == "RESULTAT":
     try: robot_place.image("tenor.gif", width=400)
     except: pass
     
-    maladie = ARBRE.get(st.session_state.chemin, "Inconnu")
-    traitement = SOINS.get(maladie, "Repos et surveillance.")
-    
-    st.success(f"**Diagnostic : {maladie}**")
-    parler(f"Diagnostic : {maladie}. Voici votre ordonnance automatique.")
+    maladie = ARBRE.get(st.session_state.chemin, "Analyse complexe : Cas hors base de données standard.")
+    traitement = SOINS.get(maladie, "Repos et surveillance hospitalière nécessaire.")
+    certitude = "98%" if len(st.session_state.chemin) >= 10 else "75% (Diagnostic rapide)"
 
-    # --- AFFICHAGE DE L'ORDONNANCE ---
-    st.markdown("""
-    <style>
-    .ordonnance {
-        background-color: white;
-        color: black;
-        padding: 20px;
-        border: 2px solid #000;
-        font-family: 'Courier New', Courier, monospace;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    st.success(f"### Diagnostic final : {maladie}")
+    st.write(f"**Indice de certitude algorithmique : {certitude}**")
+    parler(f"Diagnostic : {maladie}. Certitude {certitude}.")
 
+    # L'ORDONNANCE
     st.markdown(f"""
-    <div class="ordonnance">
-        <h2 style="text-align:center;">ORDONNANCE NUMÉRIQUE</h2>
-        <p><b>Praticien :</b> IA Méga Senku v3.0</p>
-        <p><b>Date :</b> 16/03/2026</p>
+    <div style="background-color: white; color: black; padding: 25px; border: 4px solid #1f1f1f; font-family: 'Arial';">
+        <h2 style="text-align:center;">ORDONNANCE IA v4.0</h2>
+        <p><b>Diagnostic :</b> {maladie}</p>
+        <p><b>Confiance :</b> {certitude}</p>
         <hr>
-        <p><b>Pathologie détectée :</b> {maladie}</p>
-        <p><b>Traitement préconisé :</b></p>
-        <p style="font-size: 18px;">- {traitement}</p>
+        <p><b>PRESCRIPTION :</b></p>
+        <p style="font-size: 20px; color: blue;">👉 {traitement}</p>
         <br>
-        <p style="text-align:right;"><i>Signature Numérique Certifiée</i></p>
+        <p style="font-size: 10px;">Cette prescription est issue d'une branche logique de {len(st.session_state.chemin)} étapes.</p>
     </div>
     """, unsafe_allow_html=True)
     
-    if st.button("🔄 NOUVELLE ANALYSE"):
+    if st.button("🔄 NOUVEL SCAN"):
         st.session_state.etape = "OFF"
         st.session_state.chemin = ""
         st.rerun()
+    
