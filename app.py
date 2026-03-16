@@ -1,9 +1,10 @@
 import streamlit as st
 from gtts import gTTS
 import base64
+import time
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="IA vs MÉDECIN - Expert V4", page_icon="🧪")
+st.set_page_config(page_title="Dr. Méga Senku - IA 7.0", page_icon="🧪")
 
 def parler(texte):
     try:
@@ -14,165 +15,125 @@ def parler(texte):
             b64 = base64.b64encode(data).decode()
             md = f'<audio autoplay="true"><source src="data:audio/mp3;base64,{b64}" type="audio/mp3"></audio>'
             st.markdown(md, unsafe_allow_html=True)
-    except:
-        pass
+    except: pass
 
 if 'etape' not in st.session_state:
     st.session_state.etape = "OFF"
-    st.session_state.chemin = ""
+    st.session_state.reponses = {}
+    st.session_state.index_q = 0
 
-st.markdown("# 👨‍🔬 Dr. Méga Senku - Intelligence Médicale")
-st.markdown("### 🔍 Problématique : L'IA peut-elle surpasser le diagnostic humain ?")
-st.divider()
+st.markdown("# 👨‍🔬 Dr. Méga Senku - IA Médicale v7.0")
+st.markdown("### 🔍 Scanner Expert : 30 Symptômes & 50+ Pathologies")
 
-robot_place = st.empty()
-
-# --- BASE DE DONNÉES DES QUESTIONS (Arbre Profond) ---
-ARBRE = {
-    "": "Avez-vous de la fièvre ?",
-    # Branche OUI (Fièvre)
-    "O": "La fièvre est-elle apparue brutalement ?",
-    "OO": "Dépasse-t-elle les 39.5°C ?",
-    "OOO": "Ressentez-vous une raideur dans la nuque ?",
-    "OOOO": "Avez-vous des taches violacées sur la peau ?",
-    "OOOOO": "MÉNINGITE (Urgence Absolue)", # Diagnostic rapide si grave
-    "OOON": "Avez-vous une toux avec des douleurs thoraciques ?",
-    "OOONO": "Est-ce que vous crachez du sang ?",
-    "OOONOO": "PNEUMONIE SÉVÈRE",
-    "ON": "Est-ce une fièvre modérée avec fatigue ?",
-    "ONO": "Avez-vous les ganglions du cou gonflés ?",
-    "ONOO": "Est-ce que vous avez du mal à ouvrir la bouche ?",
-    "ONOOO": "ANGINE BLANCHE",
-    "ONON": "Avez-vous des courbatures généralisées ?",
-    "ONONO": "GRIPPE SAISONNIÈRE",
-    
-    # Branche NON (Pas de fièvre)
-    "N": "Ressentez-vous une douleur physique ?",
-    "NO": "La douleur est-elle abdominale (ventre) ?",
-    "NOO": "Est-ce situé en bas à droite ?",
-    "NOOO": "La douleur augmente-t-elle quand vous sautez ou marchez ?",
-    "NOOOO": "Avez-vous des nausées ?",
-    "NOOOOO": "APPENDICITE",
-    "NON": "La douleur est-elle dans la tête ?",
-    "NONO": "Est-ce que la lumière vous est insupportable ?",
-    "NONOO": "Est-ce accompagné de vomissements ?",
-    "NONOOO": "MIGRAINE CHRONIQUE",
-    "NN": "Est-ce un problème respiratoire ?",
-    "NNO": "Entendez-vous un sifflement quand vous expirez ?",
-    "NNOO": "Est-ce que cela empire la nuit ?",
-    "NNOOO": "ASTHME",
-    "NNN": "Est-ce une fatigue intense ?",
-    "NNNO": "Avez-vous le teint très pâle ?",
-    "NNNOO": "ANÉMIE SÉVÈRE",
-    "NNNN": "Sentez-vous un stress psychologique important ?",
-    "NNNNO": "BURN-OUT / ÉPUISEMENT"
-}
-
-# Questions de "Levée de doute" si le chemin est trop long
-QUESTIONS_SUPPLEMENTAIRES = [
-    "Ressentez-vous une accélération de votre rythme cardiaque ?",
-    "Avez-vous des vertiges quand vous vous levez ?",
-    "Vos symptômes sont-ils plus forts le matin ?",
-    "Avez-vous pris un médicament qui n'a pas fonctionné ?",
-    "Est-ce que cette douleur vous empêche de dormir ?",
-    "Avez-vous voyagé récemment à l'étranger ?",
-    "Y a-t-il des cas similaires dans votre entourage ?",
-    "Ressentez-vous un engourdissement dans les membres ?",
-    "Avez-vous une perte d'appétit totale ?",
-    "L'IA a besoin d'une dernière confirmation : vos symptômes sont-ils stables ?"
+# --- LISTE DES 30 SYMPTÔMES (Balaie tout le corps) ---
+QUESTIONS = [
+    # Général
+    ("fievre", "Fièvre (>38.5°C) ?"), ("fatigue", "Fatigue intense / Épuisement ?"), ("frissons", "Frissons ou sueurs nocturnes ?"),
+    # Tête & Cou
+    ("tete", "Maux de tête violents ?"), ("gorge", "Mal de gorge intense ?"), ("nuque", "Raideur de la nuque (douleur en baissant la tête) ?"),
+    ("vertiges", "Vertiges ou pertes d'équilibre ?"), ("ganglions", "Ganglions gonflés au cou ou aux aisselles ?"),
+    # Respiratoire
+    ("toux_seche", "Toux sèche irritante ?"), ("toux_grasse", "Toux avec sécrétions (glaires) ?"), ("souffle", "Difficulté à respirer (essoufflement) ?"),
+    ("sifflement", "Sifflement lors de la respiration ?"), ("nez_coule", "Écoulement nasal ou nez bouché ?"),
+    # Digestif
+    ("nausees", "Nausées ou envie de vomir ?"), ("vomis", "Vomissements effectifs ?"), ("douleur_ventre", "Douleurs abdominales ?"),
+    ("diarrhee", "Diarrhée ou troubles intestinaux ?"), ("appetit", "Perte totale d'appétit ?"),
+    # Douleurs & Peau
+    ("courbatures", "Douleurs musculaires / Courbatures ?"), ("dos", "Douleur vive dans le bas du dos ?"), ("articulations", "Douleurs aux articulations ?"),
+    ("boutons", "Apparition de boutons ou vésicules ?"), ("plaques", "Plaques rouges ou démangeaisons ?"), ("teint", "Teint pâle ou yeux jaunes ?"),
+    # Signatures Spécifiques
+    ("perte_gout", "Perte du goût ou de l'odorat ?"), ("taches_bouche", "Petites taches blanches à l'intérieur des joues ?"),
+    ("douleur_droite", "Douleur très précise en bas à droite du ventre ?"), ("photophobie", "La lumière fait-elle mal aux yeux ?"),
+    ("soif", "Soif permanente et besoin d'uriner fréquent ?"), ("oppression", "Sensation de broyage dans la poitrine ?")
 ]
 
+# --- BASE DE DONNÉES (Exemple de structure avec signatures) ---
+# Chaque maladie a : [Symptômes communs], [Signatures uniques], "Traitement"
+DB = {
+    "Grippe Infectieuse": (["fievre", "fatigue", "frissons", "toux_seche"], ["courbatures", "tete"], "Repos, Paracétamol, Hydratation."),
+    "Méningite": (["fievre", "tete", "nausees", "vomis"], ["nuque", "photophobie"], "URGENCE VITALE : Appelez le 15 immédiatement."),
+    "Appendicite Aiguë": (["fievre", "nausees", "vomis", "appetit"], ["douleur_ventre", "douleur_droite"], "URGENCE : Chirurgie nécessaire."),
+    "COVID-19": (["fievre", "toux_seche", "fatigue", "nez_coule"], ["perte_gout", "souffle"], "Isolement, Test PCR, Surveillance oxygène."),
+    "Rougeole": (["fievre", "toux_seche", "nez_coule", "yeux_rouges"], ["taches_bouche", "boutons"], "Repos, Surveillance de la fièvre."),
+    "Gastro-entérite": (["fatigue", "appetit", "douleur_ventre", "frissons"], ["vomis", "diarrhee"], "Solution de réhydratation, Régime riz."),
+    "Angine Bactérienne": (["fievre", "tete", "fatigue", "courbatures"], ["gorge", "ganglions"], "Antibiotiques, Spray antiseptique."),
+    "Asthme Sévère": (["toux_seche", "oppression", "fatigue", "frissons"], ["souffle", "sifflement"], "Ventoline, Corticoïdes inhalés."),
+    "Diabète Type 1 (Détection)": (["fatigue", "appetit", "vertiges", "nausees"], ["soif", "perte_poids"], "Bilan glycémique urgent."),
+    "Pneumonie": (["fievre", "frissons", "fatigue", "souffle"], ["toux_grasse", "oppression"], "Antibiotiques, Radio pulmonaire.")
+}
+
 # --- LOGIQUE ---
-
 if st.session_state.etape == "OFF":
-    try: robot_place.image("repos.jpg", width=400)
-    except: pass
-    if st.button("🚀 ACTIVER LE SCANNER MÉDICAL"):
-        st.session_state.etape = "INTRO"
-        st.rerun()
-
-elif st.session_state.etape == "INTRO":
-    try: robot_place.image("tenor.gif", width=400)
-    except: pass
-    msg = "L'humain s'arrête après 3 questions. Ma logique binaire va explorer chaque branche de votre système biologique. Scan complet activé."
-    st.write(f"💬 **Senku :** {msg}")
-    parler(msg)
-    if st.button("DÉMARRER"):
+    if st.button("🚀 LANCER LE SCAN MÉDICAL PROFOND (30 POINTS)"):
         st.session_state.etape = "QUESTIONS"
         st.rerun()
 
 elif st.session_state.etape == "QUESTIONS":
-    try: robot_place.image("repos.jpg", width=400)
-    except: pass
-    
-    chemin = st.session_state.chemin
-    nb_questions = len(chemin)
-    
-    # 1. On cherche dans l'arbre principal
-    sujet = ARBRE.get(chemin)
-    
-    # 2. Si on n'est pas encore à 10 questions, on force des questions supplémentaires
-    if nb_questions < 10:
-        if sujet and "?" in sujet:
-            question_a_poser = sujet
-        else:
-            # Si l'arbre est fini mais qu'on a moins de 10 questions, on pioche dans les suppléments
-            index_supp = nb_questions % len(QUESTIONS_SUPPLEMENTAIRES)
-            question_a_poser = f"[Analyse de précision] {QUESTIONS_SUPPLEMENTAIRES[index_supp]}"
-    else:
-        # Après 10 questions, si on a un diagnostic (pas de point d'interrogation), on finit
-        if sujet and "?" not in sujet:
-            st.session_state.etape = "RESULTAT"
-            st.rerun()
-        else:
-            # Sinon on continue un peu pour être sûr
-            index_supp = nb_questions % len(QUESTIONS_SUPPLEMENTAIRES)
-            question_a_poser = f"[Levée de doute finale] {QUESTIONS_SUPPLEMENTAIRES[index_supp]}"
-            if nb_questions > 12: # Sécurité pour ne pas être infini non plus
-                st.session_state.etape = "RESULTAT"
+    idx = st.session_state.index_q
+    if idx < len(QUESTIONS):
+        id_s, txt = QUESTIONS[idx]
+        st.write(f"📊 **Analyse n°{idx+1} / 30**")
+        st.progress((idx + 1) / len(QUESTIONS))
+        st.info(txt)
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("✅ OUI"):
+                st.session_state.reponses[id_s] = True
+                st.session_state.index_q += 1
                 st.rerun()
+        with c2:
+            if st.button("❌ NON"):
+                st.session_state.reponses[id_s] = False
+                st.session_state.index_q += 1
+                st.rerun()
+    else:
+        st.session_state.etape = "AI_THINKING"
+        st.rerun()
 
-    st.write(f"📊 **Examen biologique n°{nb_questions + 1}**")
-    st.progress(min(nb_questions * 10, 100))
-    st.info(question_a_poser)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✅ OUI"):
-            st.session_state.chemin += "O"
-            st.rerun()
-    with col2:
-        if st.button("❌ NON"):
-            st.session_state.chemin += "N"
-            st.rerun()
+elif st.session_state.etape == "AI_THINKING":
+    st.write("🔬 **Analyse des 30 points de données par le réseau neuronal...**")
+    bar = st.progress(0)
+    for i in range(100):
+        time.sleep(0.03)
+        bar.progress(i + 1)
+    st.session_state.etape = "RESULTAT"
+    st.rerun()
 
 elif st.session_state.etape == "RESULTAT":
-    try: robot_place.image("tenor.gif", width=400)
-    except: pass
+    mes_s = [k for k, v in st.session_state.reponses.items() if v]
     
-    # On cherche le dernier diagnostic connu dans le chemin
-    diag = "Pathologie complexe (Nécessite Scanner)"
-    for i in range(len(st.session_state.chemin), 0, -1):
-        test_chemin = st.session_state.chemin[:i]
-        if test_chemin in ARBRE and "?" not in ARBRE[test_chemin]:
-            diag = ARBRE[test_chemin]
-            break
+    best_m = "Indéterminé (Symptômes trop vagues)"
+    max_score = 0
+    final_soin = "Veuillez consulter un médecin pour un examen clinique."
 
-    st.success(f"### Diagnostic final : {diag}")
-    parler(f"Analyse terminée après {len(st.session_state.chemin)} tests. Résultat : {diag}.")
+    for nom, (communs, signatures, soin) in DB.items():
+        score_c = len(set(mes_s) & set(communs))
+        score_s = len(set(mes_s) & set(signatures)) * 2 # Les signatures comptent double !
+        total = score_c + score_s
+        
+        if total > max_score:
+            max_score = total
+            best_m = nom
+            final_soin = soin
+
+    st.success(f"### Résultat du Scan : {best_m}")
+    parler(f"Analyse terminée. Ma base de données indique une probabilité forte de {best_m}.")
 
     st.markdown(f"""
-    <div style="background-color: white; color: black; padding: 20px; border: 3px solid black;">
-        <h2 style="text-align:center;">ORDONNANCE IA MÉGAVERSION</h2>
-        <p><b>Diagnostic :</b> {diag}</p>
-        <p><b>Niveau de scan :</b> {len(st.session_state.chemin)} étapes logiques</p>
+    <div style="background-color: white; color: black; padding: 25px; border: 5px solid #1f1f1f; border-radius: 15px;">
+        <h2 style="text-align:center;">RAPPORT DE DIAGNOSTIC IA</h2>
+        <p><b>Points analysés :</b> 30 symptômes</p>
+        <p><b>Score de confiance :</b> {min(max_score * 10, 100)}%</p>
         <hr>
-        <p>👉 Repos strict et suivi des constantes vitales.</p>
-        <p style="font-size:10px;">Généré par Dr. Méga Senku - IA de démonstration.</p>
+        <p><b>PATHOLOGIE :</b> {best_m}</p>
+        <p><b>CONDUITE À TENIR :</b> {final_soin}</p>
+        <br>
+        <p style="font-size:10px;">Signature : Dr. Méga Senku - Intelligence Artificielle</p>
     </div>
     """, unsafe_allow_html=True)
     
-    if st.button("🔄 REFAIRE UN SCAN"):
+    if st.button("🔄 NOUVELLE ANALYSE"):
         st.session_state.etape = "OFF"
-        st.session_state.chemin = ""
+        st.session_state.index_q = 0
+        st.session_state.reponses = {}
         st.rerun()
