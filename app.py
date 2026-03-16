@@ -3,7 +3,7 @@ from gtts import gTTS
 import base64
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="IA vs MÉDECIN - Arbre de Décision", page_icon="🧪")
+st.set_page_config(page_title="IA vs MÉDECIN", page_icon="🧪")
 
 def parler(texte):
     try:
@@ -17,92 +17,96 @@ def parler(texte):
     except:
         pass
 
-# --- INITIALISATION ---
 if 'etape' not in st.session_state:
     st.session_state.etape = "OFF"
     st.session_state.chemin = ""
 
-st.markdown("# 👨‍🔬 Dr. Méga Senku - IA Médicale")
-st.markdown("### 🔍 Problématique : L'IA peut-elle remplacer l'humain par sa logique pure ?")
+st.markdown("# 👨‍🔬 Dr. Méga Senku - Système Expert")
+st.markdown("### 🔍 Problématique : L'IA peut-elle surpasser le diagnostic humain ?")
 st.divider()
 
 robot_place = st.empty()
 
-def afficher_visuel(mode):
-    if mode == "parle":
-        try: robot_place.image("tenor.gif", width=400)
-        except: robot_place.info("💬 [Méga Senku parle...]")
-    else:
-        try: robot_place.image("repos.jpg", width=400)
-        except: robot_place.info("🔬 [Analyse en cours...]")
-
-# --- L'ARBRE DE DÉCISION GÉANT (Logique de branches) ---
+# --- L'ARBRE DE DÉCISION GÉANT ---
 # O = Oui, N = Non
 ARBRE = {
     "": "Avez-vous de la fièvre ?",
-    # --- BRANCHE OUI (FIEVRE) ---
-    "O": "Ressentez-vous une fatigue extrême (alité) ?",
-    "OO": "Avez-vous une toux importante ?",
-    "OOO": "Grippe",
-    "OON": "Courbatures et maux de tête ?",
-    "OONO": "Dengue",
-    "OONN": "Paludisme",
-    "ON": "Avez-vous des plaques ou boutons sur la peau ?",
-    "ONO": "Varicelle",
-    "ONN": "Est-ce une douleur à la gorge ?",
-    "ONNO": "Angine",
+    # Branche FIEVRE
+    "O": "La fièvre est-elle supérieure à 39°C ?",
+    "OO": "Avez-vous des difficultés à respirer ?",
+    "OOO": "Pneumonie",
+    "OON": "Avez-vous une toux sèche et des courbatures ?",
+    "OONO": "Grippe",
+    "OONN": "Bronchite aiguë",
+    "ON": "Avez-vous des plaques rouges sur le corps ?",
+    "ONO": "Avez-vous eu un contact avec un enfant malade ?",
+    "ONOO": "Varicelle",
+    "ONON": "Rougeole",
+    "ONN": "Avez-vous très mal à la gorge ?",
+    "ONNO": "Angine bactérienne",
     "ONNN": "Mononucléose",
-    
-    # --- BRANCHE NON (PAS DE FIEVRE) ---
-    "N": "Avez-vous une douleur localisée ?",
-    "NO": "Est-ce au niveau du ventre ?",
-    "NOO": "Avez-vous des nausées ?",
-    "NOOO": "Gastro-entérite",
-    "NOON": "Appendicite (douleur à droite ?)",
-    "NON": "Est-ce au niveau de la tête ?",
-    "NONO": "Migraine",
-    "NONN": "Sinusite",
-    "NN": "Avez-vous des difficultés respiratoires ?",
-    "NNO": "Est-ce chronique (depuis longtemps) ?",
+    # Branche SANS FIEVRE
+    "N": "Ressentez-vous une douleur physique localisée ?",
+    "NO": "La douleur est-elle située dans l'abdomen ?",
+    "NOO": "La douleur est-elle en bas à droite du ventre ?",
+    "NOOO": "Appendicite",
+    "NOON": "Est-ce lié à ce que vous avez mangé ?",
+    "NOONO": "Intoxication alimentaire",
+    "NOONN": "Gastro-entérite",
+    "NON": "La douleur est-elle située à la tête ?",
+    "NONO": "La lumière vous fait-elle mal aux yeux ?",
+    "NONOO": "Migraine sévère",
+    "NONON": "Céphalée de tension",
+    "NONN": "Est-ce une douleur articulaire ?",
+    "NONNO": "Arthrose",
+    "NONNN": "Sciatique",
+    "NN": "Avez-vous un symptôme respiratoire (toux, sifflement) ?",
+    "NNO": "Est-ce que cela arrive souvent (chronique) ?",
     "NNOO": "Asthme",
-    "NNON": "Bronchite",
-    "NNN": "Avez-vous des plaques rouges sans fièvre ?",
-    "NNNO": "Eczéma",
-    "NNNN": "Simple fatigue ou stress"
+    "NNON": "Allergie saisonnière",
+    "NNN": "Est-ce une fatigue inhabituelle ?",
+    "NNNO": "Anémie (manque de fer)",
+    "NNNN": "Simple fatigue ou Stress intense"
 }
-
-# NOTE : Pour l'oral, explique que cet arbre contient 50 "noeuds" finaux 
-# (Ici simplifié pour que le code reste lisible, mais la logique est là).
 
 # --- INTERFACE ---
 
 if st.session_state.etape == "OFF":
-    afficher_visuel("repos")
-    if st.button("🚀 ACTIVER LE CERVEAU DE SENKU"):
+    try: robot_place.image("repos.jpg", width=400)
+    except: pass
+    if st.button("🚀 ACTIVER LE SYSTÈME EXPERT"):
         st.session_state.etape = "INTRO"
         st.rerun()
 
 elif st.session_state.etape == "INTRO":
-    afficher_visuel("parle")
-    msg = "L'humain se base sur l'intuition. Moi, je me base sur des branches logiques. Chaque 'Non' élimine des milliers de possibilités. Commençons l'analyse différentielle."
+    try: robot_place.image("tenor.gif", width=400)
+    except: pass
+    msg = "L'humain oublie des détails. Ma base de données, non. Je vais scanner vos symptômes à travers mon arbre logique."
     st.write(f"**Senku :** {msg}")
     parler(msg)
-    if st.button("DÉMARRER"):
+    if st.button("DÉMARRER L'ANALYSE"):
         st.session_state.etape = "QUESTIONS"
         st.rerun()
 
 elif st.session_state.etape == "QUESTIONS":
-    afficher_visuel("repos")
+    try: robot_place.image("repos.jpg", width=400)
+    except: pass
+    
     chemin = st.session_state.chemin
-    question_ou_resultat = ARBRE.get(chemin, "FIN")
+    question_actuelle = ARBRE.get(chemin, "FIN")
 
-    # Si le texte dans l'arbre n'est pas une question (pas de point d'interrogation)
-    if "?" not in question_ou_resultat:
+    # Si c'est un résultat final (pas de point d'interrogation)
+    if "?" not in question_actuelle:
         st.session_state.etape = "RESULTAT"
         st.rerun()
     else:
-        st.write(f"### Diagnostic en cours...")
-        st.info(question_ou_resultat)
+        # Barre de progression
+        progression = len(chemin) * 20
+        st.progress(min(progression, 100))
+        
+        st.write(f"### Question de l'IA :")
+        st.info(question_actuelle)
+        
         col1, col2 = st.columns(2)
         with col1:
             if st.button("✅ OUI"):
@@ -114,18 +118,20 @@ elif st.session_state.etape == "QUESTIONS":
                 st.rerun()
 
 elif st.session_state.etape == "RESULTAT":
-    afficher_visuel("parle")
-    verdict_final = ARBRE.get(st.session_state.chemin, "Pathologie complexe (nécessite scanner)")
+    try: robot_place.image("tenor.gif", width=400)
+    except: pass
     
-    msg_fin = f"Résultat de l'algorithme : {verdict_final}. Ma logique binaire a tranché. Pas besoin d'examen clinique humain."
-    st.success(msg_fin)
-    parler(msg_fin)
+    maladie = ARBRE.get(st.session_state.chemin, "Pathologie non répertoriée")
+    verdict = f"Diagnostic établi : {maladie}. La logique binaire a parlé. L'IA a fini son travail."
+    
+    st.success(verdict)
+    parler(verdict)
     
     st.write("---")
-    st.write("**Démonstration pour l'exposé :**")
-    st.markdown(f"Chemin logique parcouru : `{st.session_state.chemin}`")
-    
-    if st.button("🔄 NOUVELLE ANALYSE"):
+    st.write(f"**Analyse du chemin logique :** `{st.session_state.chemin}`")
+    st.caption("Chaque lettre correspond à un embranchement de l'arbre décisionnel médical.")
+
+    if st.button("🔄 NOUVEAU PATIENT"):
         st.session_state.etape = "OFF"
         st.session_state.chemin = ""
         st.rerun()
