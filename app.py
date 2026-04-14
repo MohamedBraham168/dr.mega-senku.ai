@@ -72,20 +72,27 @@ maladies_data = {
 symptome_utilisateur = st.text_input("Posez votre question ici (ex: j'ai la nuque raide) :")
 
 if symptome_utilisateur:
-with st.spinner('Analyse médicale en cours...'):
-time.sleep(1)
-
-s_user = symptome_utilisateur.lower()
+with st. spinner ( 'Analyse
+médicale en cours...'):
+time.sleep (1)
+s user =
+symptome_ utilisateur. lower ()
 trouve = False
-
-for maladie, symptomes in maladies_data.items():
-# Vérifie si le symptôme saisi est dans la liste de cette maladie
-if any(s.lower() in s_user for s in symptomes):
-st.success(f"D'après mon analyse, il pourrait s'agir de : **{maladie.upper()}**")
-st.info(f"Symptômes signatures : {', '.join(symptomes)}")
-st.warning("⚠️ Attention : Je ne suis qu'une intelligence artificielle. Consultez un médecin.")
+for maladie, symptomes in
+maladies data.items ():
+# Vérifie si le symptôme
+saisi est dans la liste de cette maladie
+if any(s.lower() in s_user
+for s in symptomes) :
+st. success ({"D'après mon
+analyse, il pourrait agir de :
+**{maladie.upper ()}**")
+st. info(f"Symptômes
+signatures : {'
+•join (symptomes) }")
+st.warning("!
+Attention : Je ne suis qu'une intelligence artificielle. Consultez un médecin.")
 trouve = True
 break
-
 if not trouve:
-st.error("Désolé, je ne trouve pas de maladie correspondant à ce symptôme dans ma base de 50 signatures.")
+st.error( "Désolé, je ne trouve pas de maladie correspondant à ce symptôme dans ma base de données.")
