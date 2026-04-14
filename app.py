@@ -5,8 +5,7 @@ import sys
 NOM_IA = "Nano-Diagnostic V1.0"
 
 def animation_chargement():
-    print(f"\n--- Connexion au 
-{NOM_IA} ---")
+    print(f"\n--- Connexion au {NOM_IA} ---")
     barre = ["[□□□□□□□□□□]",
 "[■□□□□□□□□□]", "[■■■□□□□□□□]", 
 "[■■■■■□□□□□]", "[■■■■■■■□□□]", 
