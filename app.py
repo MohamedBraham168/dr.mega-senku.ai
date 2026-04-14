@@ -1,20 +1,15 @@
 import streamlit as st
 import time
 
-# --- CONFIGURATION DU CHATBOT ---
+# --- CONFIGURATION ---
 NOM_IA = "Dr. IA"
 
-# --- AFFICHAGE DE L'IMAGE ---
-# On utilise le nom qu'on a choisi ensemble : robot_diagnostic.jpg
-try:
-    st.image("robot_diagnostic.jpg", width=300)
-except:
-    st.info("💡 Pense à bien nommer ton image 'robot_diagnostic.jpg' sur GitHub.")
+# --- IMAGE ---
+st.image("robot_diagnostic.jpg", width=300)
 
-st.title(f"🤖 {NOM_IA} : Chatbot de Diagnostic")
-st.write("Entrez vos symptômes pour une analyse instantanée.")
+st.title(f"🤖 {NOM_IA} : Diagnostic Intelligent")
 
-# --- BASE DE DONNÉES (50 MALADIES) ---
+# --- BASE DE DONNÉES ---
 maladies_data = {
 "Angine": ["gorge rouge", "difficulté à avaler", "fièvre"],
 "Grippe": ["courbatures", "forte fièvre", "frissons"],
@@ -68,31 +63,23 @@ maladies_data = {
 "Méningite": ["nuque raide", "peur de la lumière", "taches violettes"]
 }
 
-# --- LOGIQUE DU CHATBOT ---
-symptome_utilisateur = st.text_input("Posez votre question ici (ex: j'ai la nuque raide) :")
+# --- LOGIQUE ---
+user_input = st.text_input("Posez votre question ici :")
 
-if symptome_utilisateur:
-with st. spinner ( 'Analyse
-médicale en cours...'):
-time.sleep (1)
-s user =
-symptome_ utilisateur. lower ()
+if user_input:
+st.write("Analyse en cours...")
+time.sleep(1)
+
+s_user = user_input.lower()
 trouve = False
-for maladie, symptomes in
-maladies data.items ():
-# Vérifie si le symptôme
-saisi est dans la liste de cette maladie
-if any(s.lower() in s_user
-for s in symptomes) :
-st. success ({"D'après mon
-analyse, il pourrait agir de :
-**{maladie.upper ()}**")
-st. info(f"Symptômes
-signatures : {'
-•join (symptomes) }")
-st.warning("!
-Attention : Je ne suis qu'une intelligence artificielle. Consultez un médecin.")
+
+for maladie, symptomes in maladies_data.items():
+if any(s.lower() in s_user for s in symptomes):
+st.success(f"Diagnostic : **{maladie.upper()}**")
+st.info(f"Symptômes signatures : {', '.join(symptomes)}")
+st.warning("⚠️ Consultez un médecin pour confirmer.")
 trouve = True
 break
+
 if not trouve:
-st.error( "Désolé, je ne trouve pas de maladie correspondant à ce symptôme dans ma base de données.")
+st.error("Aucune correspondance trouvée dans ma base de données.")
