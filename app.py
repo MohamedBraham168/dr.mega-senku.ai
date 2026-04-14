@@ -67,19 +67,19 @@ maladies_data = {
 user_input = st.text_input("Posez votre question ici :")
 
 if user_input:
-st.write("Analyse en cours...")
-time.sleep(1)
+    st.write("Analyse en cours...")
+    time.sleep(1)
 
-s_user = user_input.lower()
-trouve = False
+    s_user = user_input.lower()
+    trouve = False
 
-for maladie, symptomes in maladies_data.items():
-if any(s.lower() in s_user for s in symptomes):
-st.success(f"Diagnostic : **{maladie.upper()}**")
-st.info(f"Symptômes signatures : {', '.join(symptomes)}")
-st.warning("⚠️ Consultez un médecin pour confirmer.")
-trouve = True
-break
+    for maladie, symptomes in maladies_data.items():
+        if any(s.lower() in s_user for s in symptomes):
+            st.success(f"Diagnostic : **{maladie.upper()}**")
+            st.info(f"Symptômes signatures : {', '.join(symptomes)}")
+            st.warning("⚠️ Consultez un médecin pour confirmer.")
+            trouve = True
+            break
 
 if not trouve:
 st.error("Aucune correspondance trouvée dans ma base de données.")
