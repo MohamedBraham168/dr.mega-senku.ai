@@ -1,20 +1,23 @@
 import time
 import sys
 
-# --- 1. CONFIGURATION DU ROBOT ---
-# Pour ton site ou ton dossier, l'image est nommée : robot_diagnostic.jpg
+# --- CONFIGURATION ---
 NOM_IA = "Nano-Diagnostic V1.0"
 
 def animation_chargement():
-print(f"--- Connexion au {NOM_IA} ---")
-barre = ["[□□□□□□□□□□]", "[■□□□□□□□□□]", "[■■■□□□□□□□]", "[■■■■■□□□□□]", "[■■■■■■■□□□]", "[■■■■■■■■■■]"]
-for etape in barre:
-sys.stdout.write(f"\rInitialisation du système : {etape}")
-sys.stdout.flush()
-time.sleep(0.3)
-print("\nSystème prêt. Analyseur de symptômes activé.\n")
+    print(f"\n--- Connexion au 
+{NOM_IA} ---")
+    barre = ["[□□□□□□□□□□]",
+"[■□□□□□□□□□]", "[■■■□□□□□□□]", 
+"[■■■■■□□□□□]", "[■■■■■■■□□□]", 
+"[■■■■■■■■■■]"]
+     for etape in barre:
+         sys.stdout.write(f"\rInitialisation du système : {etape}")
+         sys.stdout.flush()
+         time.sleep(0.2)
+     print("\nSystème prêt. Analyseur de symptômes activé.\n")
 
-# --- 2. BASE DE DONNÉES (50 MALADIES & SYMPTÔMES SIGNATURES) ---
+# --- BASE DE DONNÉES (50 MALADIES & SYMPTÔMES SIGNATURES) ---
 maladies_data = {
 "Angine": ["gorge rouge", "difficulté à avaler", "fièvre"],
 "Grippe": ["courbatures", "forte fièvre", "frissons"],
@@ -68,29 +71,29 @@ maladies_data = {
 "Méningite": ["nuque raide", "peur de la lumière", "taches violettes"]
 }
 
-# --- 3. LOGIQUE DE DIAGNOSTIC ---
+# --- LOGIQUE DE DIAGNOSTIC ---
 def lancer_diagnostic():
 animation_chargement()
 
-print(f"--- {NOM_IA} à votre écoute ---")
-symptome_saisi = input("Veuillez entrer le symptôme observé : ").lower()
+print(f"--- {NOM_IA} est prêt ---")
+symptome_saisi = input("Entrez un symptôme (ex: nuque raide) : ").lower()
 
 trouve = False
-print("\nRecherche dans la base de données génétiques...")
+print("\nRecherche dans la base de données...")
 time.sleep(1)
 
 for maladie, symptomes in maladies_data.items():
 if symptome_saisi in [s.lower() for s in symptomes]:
-print(f"\n[ALERTE] Correspondance trouvée : {maladie.upper()}")
-print(f"Symptômes signatures détectés : {', '.join(symptomes)}")
+print(f"\n[RÉSULTAT] Diagnostic possible : {maladie.upper()}")
+print(f"Symptômes associés : {', '.join(symptomes)}")
 print("-" * 40)
-print("CONSEIL IA : Contactez un médecin pour confirmer ce diagnostic.")
+print("NOTE : Ce résultat est généré par IA. Consultez un médecin.")
 trouve = True
-break # On s'arrête dès qu'on trouve la maladie signature
+break
 
 if not trouve:
-print("\nAucune signature exacte trouvée dans la base de données.")
-print("L'IA nécessite plus d'analyses ou une intervention humaine.")
+print("\nAucune correspondance trouvée.")
+print("L'IA recommande un examen humain approfondi.")
 
 # --- LANCEMENT ---
 if __name__ == "__main__":
