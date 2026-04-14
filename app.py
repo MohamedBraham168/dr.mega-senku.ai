@@ -72,7 +72,7 @@ s_user = user_input.lower()
 trouve = False
 
 for maladie, symptomes in maladies_data.items():
-if user_input and any(s.lower() in s_user for s in symptomes):
+   if user_input and any(s.lower() in s_user for s in symptomes):
             st.success(f"Diagnostic : **{maladie.upper()}**")
             st.info(f"Symptômes signatures : {', '.join(symptomes)}")
             st.warning("⚠️ Consultez un médecin pour confirmer.")
