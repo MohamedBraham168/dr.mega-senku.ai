@@ -1,3 +1,4 @@
+import streamlit as st
 # --- LOGIQUE FINALE ---
 st.write("### 📝 Sélectionnez vos symptômes :")
 
