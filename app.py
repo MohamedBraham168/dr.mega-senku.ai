@@ -7,9 +7,9 @@ NOM_IA = "Dr. IA"
 # --- AFFICHAGE DE L'IMAGE ---
 # On utilise le nom qu'on a choisi ensemble : robot_diagnostic.jpg
 try:
-st.image("robot_diagnostic.jpg", width=300)
+    st.image("robot_diagnostic.jpg", width=300)
 except:
-st.info("💡 Pense à bien nommer ton image 'robot_diagnostic.jpg' sur GitHub.")
+    st.info("💡 Pense à bien nommer ton image 'robot_diagnostic.jpg' sur GitHub.")
 
 st.title(f"🤖 {NOM_IA} : Chatbot de Diagnostic")
 st.write("Entrez vos symptômes pour une analyse instantanée.")
