@@ -1,4 +1,4 @@
-mport time
+import time
 import sys
 
 # --- 1. CONFIGURATION DU ROBOT ---
