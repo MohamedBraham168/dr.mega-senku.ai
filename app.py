@@ -22,10 +22,10 @@ if st.button("🩺 Lancer le diagnostic médical"):
             st.info(f"Symptômes signatures : {', '.join(symptomes)}")
             trouve = True
       
-            if not trouve:
-               st.warning("Aucune correspondance exacte trouvée. Essayez d'ajouter d'autres symptômes.")
+         if not trouve:
+            st.warning("Aucune correspondance exacte trouvée. Essayez d'ajouter d'autres symptômes.")
 
-st.write("---")
-st.caption("⚠️ Rappel : Cette IA ne remplace pas un vrai médecin.")
-      else:
-         st.error("Veuillez sélectionner au moins un symptôme pour l'analyse.")
+   st.write("---")
+   st.caption("⚠️ Rappel : Cette IA ne remplace pas un vrai médecin.")
+else:
+      st.error("Veuillez sélectionner au moins un symptôme pour l'analyse.")
