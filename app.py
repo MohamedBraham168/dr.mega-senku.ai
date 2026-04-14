@@ -1,22 +1,20 @@
+import streamlit as st
 import time
-import sys
 
-# --- CONFIGURATION ---
-NOM_IA = "Nano-Diagnostic V1.0"
+# --- CONFIGURATION DU CHATBOT ---
+NOM_IA = "Dr. IA"
 
-def animation_chargement():
-    print(f"\n--- Connexion au {NOM_IA} ---")
-    barre = ["[□□□□□□□□□□]",
-"[■□□□□□□□□□]", "[■■■□□□□□□□]", 
-"[■■■■■□□□□□]", "[■■■■■■■□□□]", 
-"[■■■■■■■■■■]"]
-     for etape in barre:
-         sys.stdout.write(f"\rInitialisation du système : {etape}")
-         sys.stdout.flush()
-         time.sleep(0.2)
-     print("\nSystème prêt. Analyseur de symptômes activé.\n")
+# --- AFFICHAGE DE L'IMAGE ---
+# On utilise le nom qu'on a choisi ensemble : robot_diagnostic.jpg
+try:
+st.image("robot_diagnostic.jpg", width=300)
+except:
+st.info("💡 Pense à bien nommer ton image 'robot_diagnostic.jpg' sur GitHub.")
 
-# --- BASE DE DONNÉES (50 MALADIES & SYMPTÔMES SIGNATURES) ---
+st.title(f"🤖 {NOM_IA} : Chatbot de Diagnostic")
+st.write("Entrez vos symptômes pour une analyse instantanée.")
+
+# --- BASE DE DONNÉES (50 MALADIES) ---
 maladies_data = {
 "Angine": ["gorge rouge", "difficulté à avaler", "fièvre"],
 "Grippe": ["courbatures", "forte fièvre", "frissons"],
@@ -70,30 +68,24 @@ maladies_data = {
 "Méningite": ["nuque raide", "peur de la lumière", "taches violettes"]
 }
 
-# --- LOGIQUE DE DIAGNOSTIC ---
-def lancer_diagnostic():
-animation_chargement()
+# --- LOGIQUE DU CHATBOT ---
+symptome_utilisateur = st.text_input("Posez votre question ici (ex: j'ai la nuque raide) :")
 
-print(f"--- {NOM_IA} est prêt ---")
-symptome_saisi = input("Entrez un symptôme (ex: nuque raide) : ").lower()
-
-trouve = False
-print("\nRecherche dans la base de données...")
+if symptome_utilisateur:
+with st.spinner('Analyse médicale en cours...'):
 time.sleep(1)
 
+s_user = symptome_utilisateur.lower()
+trouve = False
+
 for maladie, symptomes in maladies_data.items():
-if symptome_saisi in [s.lower() for s in symptomes]:
-print(f"\n[RÉSULTAT] Diagnostic possible : {maladie.upper()}")
-print(f"Symptômes associés : {', '.join(symptomes)}")
-print("-" * 40)
-print("NOTE : Ce résultat est généré par IA. Consultez un médecin.")
+# Vérifie si le symptôme saisi est dans la liste de cette maladie
+if any(s.lower() in s_user for s in symptomes):
+st.success(f"D'après mon analyse, il pourrait s'agir de : **{maladie.upper()}**")
+st.info(f"Symptômes signatures : {', '.join(symptomes)}")
+st.warning("⚠️ Attention : Je ne suis qu'une intelligence artificielle. Consultez un médecin.")
 trouve = True
 break
 
 if not trouve:
-print("\nAucune correspondance trouvée.")
-print("L'IA recommande un examen humain approfondi.")
-
-# --- LANCEMENT ---
-if __name__ == "__main__":
-lancer_diagnostic()
+st.error("Désolé, je ne trouve pas de maladie correspondant à ce symptôme dans ma base de 50 signatures.")
