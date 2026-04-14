@@ -27,5 +27,5 @@ if st.button("🩺 Lancer le diagnostic médical"):
 
 st.write("---")
 st.caption("⚠️ Rappel : Cette IA ne remplace pas un vrai médecin.")
-   else:
-   st.error("Veuillez sélectionner au moins un symptôme pour l'analyse.")
+      else:
+         st.error("Veuillez sélectionner au moins un symptôme pour l'analyse.")
