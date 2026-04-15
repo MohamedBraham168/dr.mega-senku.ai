@@ -71,11 +71,11 @@ if st.button("Lancer l'analyse"):
             # --- NOUVELLE LOGIQUE D'ORDONNANCE ---
             resultats = []
             for maladie, symptomes in maladies_data.items():
-               communs = [s for s in choix_utilisateur if s in symptomes]
+                  communs = [s for s in choix_utilisateur if s in symptomes]
                   score = len(communs)
                   if score > 0:
 
-resultats.append({"nom": maladie, "communs": communs, "score": score})
+            resultats.append({"nom": maladie, "communs": communs, "score": score})
 
             resultats = sorted(resultats, key=lambda x: x['score'], reverse=True)
 
