@@ -75,7 +75,7 @@ if st.button("Lancer l'analyse"):
                   score = len(communs)
                   if score > 0:
 
-            resultats.append({"nom": maladie, "communs": communs, "score": score})
+                        resultats.append({"nom": maladie, "communs": communs, "score": score})
 
             resultats = sorted(resultats, key=lambda x: x['score'], reverse=True)
 
