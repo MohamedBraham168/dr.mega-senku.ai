@@ -77,9 +77,9 @@ if st.button("Lancer l'analyse"):
          communs = [s for s in choix_utilisateur if s in symptomes]
 
          if len(communs) > 0:
-st.success(f"Pathologie identifiée : **{maladie.upper()}**")
-            st.info(f"Symptômes correspondants : {', '.join(communs)}")
-            trouve = True
+   st.success(f"Pathologie identifiée : **{maladie.upper()}**")
+               st.info(f"Symptômes correspondants : {', '.join(communs)}")
+               trouve = True
 
       if not trouve:
          st.warning("Aucune pathologie correspondante n'a été détectée dans la base.")
