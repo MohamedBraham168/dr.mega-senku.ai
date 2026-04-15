@@ -84,12 +84,12 @@ if st.button("Lancer l'analyse"):
                # On affiche la meilleure en premier (l'ordonnance)
                top = resultats[0]
             
-st.success(f"**DIAGNOSTIC PRINCIPAL : {top['nom'].upper()}**")
-              st.write(f"Symptômes correspondants : {', '.join(top['communs'])}")
+               st.success(f"**DIAGNOSTIC PRINCIPAL : {top['nom'].upper()}**")
+               st.write(f"Symptômes correspondants : {', '.join(top['communs'])}")
 
-              if len(resultats) > 1:
+               if len(resultats) > 1:
                   with st.expander("Voir les autres diagnostics possibles"):
                         for res in resultats[1:]:
                   
-st.write(f"🔸 **{res['nom']}** ({res['score']} symptômes communs)")
-                  trouve = True
+                         st.write(f"🔸 **{res['nom']}** ({res['score']} symptômes communs)")
+               trouve = True
