@@ -66,25 +66,25 @@ st.write("Cet outil permet d'identifier des pathologies potentielles en fonction
 choix_utilisateur = st.multiselect("Veuillez sélectionner vos symptômes :", options_symptomes)
 
 # 5. LOGIQUE DE CALCUL
-if st.button("Lancer l'analyse"):
-   if choix_utilisateur:
-      st.divider()
-      st.subheader("Résultats de l'analyse")
-      trouve = False
-
+      # --- NOUVELLE LOGIQUE D'ORDONNANCE ---
+      resultats = []
       for maladie, symptomes in maladies_data.items():
-         # Comparaison entre les choix et la base de données
          communs = [s for s in choix_utilisateur if s in symptomes]
+         score = len(communs)
+         if score > 0:
+            resultats.append({"nom": maladie, "communs": communs, "score": score})
 
-         if len(communs) > 0:
-            st.success(f"Pathologie identifiée : **{maladie.upper()}**")
-            st.info(f"Symptômes correspondants : {', '.join(communs)}")
-            trouve = True
+      resultats = sorted(resultats, key=lambda x: x['score'], reverse=True)
 
-      if not trouve:
-         st.warning("Aucune pathologie correspondante n'a été détectée dans la base.")
+      if resultats:
+         st.info(f"### 📋 Résultats : {len(resultats)} pathologie(s) détectée(s)")
+            # On affiche la meilleure en premier (l'ordonnance)
+            top = resultats[0]
+            st.success(f"**DIAGNOSTIC PRINCIPAL : {top['nom'].upper()}**")
+            st.write(f"Symptômes correspondants : {', '.join(top['communs'])}")
 
-      st.divider()
-      st.caption("Avertissement : Ce programme est un projet académique. Il ne constitue pas un avis médical professionnel. En cas de doute, consultez un médecin.")
-   else:
-      st.error("Erreur : Veuillez sélectionner au moins un symptôme pour lancer l'analyse.")
+         if len(resultats) > 1:
+            with st.expander("Voir les autres diagnostics possibles"):
+               for res in resultats[1:]:
+                  st.write(f"🔸 **{res['nom']}** ({res['score']} symptômes communs)")
+         trouve = True
