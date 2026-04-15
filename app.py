@@ -66,25 +66,30 @@ st.write("Cet outil permet d'identifier des pathologies potentielles en fonction
 choix_utilisateur = st.multiselect("Veuillez sélectionner vos symptômes :", options_symptomes)
 
 # 5. LOGIQUE DE CALCUL
-      # --- NOUVELLE LOGIQUE D'ORDONNANCE ---
-      resultats = []
-      for maladie, symptomes in maladies_data.items():
-         communs = [s for s in choix_utilisateur if s in symptomes]
-         score = len(communs)
-         if score > 0:
-            resultats.append({"nom": maladie, "communs": communs, "score": score})
+if st.button("Lancer l'analyse"):
+      if choix_utilisateur:      
+            # --- NOUVELLE LOGIQUE D'ORDONNANCE ---
+            resultats = []
+            for maladie, symptomes in maladies_data.items():
+               communs = [s for s in choix_utilisateur if s in symptomes]
+                  score = len(communs)
+                  if score > 0:
 
-      resultats = sorted(resultats, key=lambda x: x['score'], reverse=True)
+resultats.append({"nom": maladie, "communs": communs, "score": score})
 
-      if resultats:
-         st.info(f"### 📋 Résultats : {len(resultats)} pathologie(s) détectée(s)")
-            # On affiche la meilleure en premier (l'ordonnance)
-            top = resultats[0]
-            st.success(f"**DIAGNOSTIC PRINCIPAL : {top['nom'].upper()}**")
-            st.write(f"Symptômes correspondants : {', '.join(top['communs'])}")
+            resultats = sorted(resultats, key=lambda x: x['score'], reverse=True)
 
-         if len(resultats) > 1:
-            with st.expander("Voir les autres diagnostics possibles"):
-               for res in resultats[1:]:
-                  st.write(f"🔸 **{res['nom']}** ({res['score']} symptômes communs)")
-         trouve = True
+            if resultats:
+               st.info(f"### 📋 Résultats : {len(resultats)} pathologie(s) détectée(s)")
+               # On affiche la meilleure en premier (l'ordonnance)
+               top = resultats[0]
+            
+st.success(f"**DIAGNOSTIC PRINCIPAL : {top['nom'].upper()}**")
+              st.write(f"Symptômes correspondants : {', '.join(top['communs'])}")
+
+              if len(resultats) > 1:
+                  with st.expander("Voir les autres diagnostics possibles"):
+                        for res in resultats[1:]:
+                  
+st.write(f"🔸 **{res['nom']}** ({res['score']} symptômes communs)")
+                  trouve = True
