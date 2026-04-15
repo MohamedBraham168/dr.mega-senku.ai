@@ -1,1 +1,1 @@
-# dr.mega-senku.ai
+# chatbot_medical.ai
